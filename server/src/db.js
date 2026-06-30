@@ -35,12 +35,27 @@ CREATE TABLE IF NOT EXISTS orders (
   user_id      INTEGER NOT NULL,
   plan         TEXT,
   days         INTEGER NOT NULL,
-  amount       TEXT NOT NULL,           -- 金额(元)，字符串如 "9.90"
+  amount       TEXT NOT NULL,           -- 金额，字符串如 "9.90"
   status       TEXT DEFAULT 'pending',  -- pending | paid
-  trade_no     TEXT,                    -- 支付宝交易号
+  trade_no     TEXT,                    -- 第三方交易号
+  provider     TEXT DEFAULT 'alipay',   -- 支付渠道：alipay | lemonsqueezy ...
+  currency     TEXT DEFAULT 'CNY',      -- 币种：CNY | USD ...
   created_at   INTEGER NOT NULL,
   paid_at      INTEGER
 );
 `);
+
+/* ---- 迁移：为旧库的 orders 表补充 provider / currency 列 ---- */
+(function migrate() {
+  try {
+    const cols = db.prepare("PRAGMA table_info(orders)").all().map((c) => c.name);
+    if (!cols.includes("provider"))
+      db.exec("ALTER TABLE orders ADD COLUMN provider TEXT DEFAULT 'alipay'");
+    if (!cols.includes("currency"))
+      db.exec("ALTER TABLE orders ADD COLUMN currency TEXT DEFAULT 'CNY'");
+  } catch (e) {
+    console.error("orders 表迁移失败:", e.message);
+  }
+})();
 
 module.exports = db;

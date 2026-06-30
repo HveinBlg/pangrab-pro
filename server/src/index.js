@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const db = require("./db");
 const alipay = require("./alipay");
+const lemon = require("./lemonsqueezy");
 
 const PORT = process.env.PORT || 8787;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
@@ -26,7 +27,8 @@ const PLANS = {
 };
 
 const app = express();
-app.use(express.json({ limit: "5mb" }));
+// 保留原始请求体，供 Lemon Squeezy webhook 做 HMAC 验签
+app.use(express.json({ limit: "5mb", verify: function (req, _res, buf) { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: false })); // 支付宝异步通知是 form 表单
 // 允许扩展(chrome-extension://) 与网页调用
 app.use(cors({ origin: true }));
@@ -61,6 +63,44 @@ function requirePro(req, res, next) {
 
 function publicUser(u) {
   return { id: u.id, email: u.email, pro_until: u.pro_until || 0, is_pro: isPro(u) };
+}
+
+/**
+ * 标记订单已支付并给用户增加会员天数（幂等：已 paid 的订单不重复加）。
+ * 各支付渠道的回调都复用此逻辑。返回是否实际入账。
+ */
+function creditOrder(outTradeNo, tradeNo) {
+  const order = db.prepare("SELECT * FROM orders WHERE out_trade_no=?").get(outTradeNo);
+  if (!order || order.status === "paid") return false;
+  const user = db.prepare("SELECT * FROM users WHERE id=?").get(order.user_id);
+  if (!user) return false;
+  const base = isPro(user) ? user.pro_until : now();
+  const newUntil = base + order.days * 24 * 3600 * 1000;
+  const tx = db.transaction(() => {
+    db.prepare("UPDATE orders SET status='paid', trade_no=?, paid_at=? WHERE out_trade_no=?")
+      .run(tradeNo || "", now(), order.out_trade_no);
+    db.prepare("UPDATE users SET pro_until=? WHERE id=?").run(newUntil, user.id);
+  });
+  tx();
+  return true;
+}
+
+// 默认支付渠道：优先支付宝，其次国际
+function defaultProvider() {
+  if (alipay.enabled()) return "alipay";
+  if (lemon.enabled()) return "lemonsqueezy";
+  return "";
+}
+
+// 支付完成后用户浏览器看到的提示页（支付宝/国际通用）
+function payDonePage() {
+  return '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>支付完成 / Payment complete</title><style>body{font-family:system-ui,-apple-system,sans-serif;' +
+    'text-align:center;padding:60px 20px;color:#1f2733}h2{color:#15a05b}p{color:#7a869a;line-height:1.7}</style>' +
+    '<h2>✓ 支付完成 / Payment complete</h2>' +
+    '<p>请回到 PanGrab 扩展的「账号 / 云同步」面板，重新打开即可看到会员状态已更新。<br/>' +
+    'Please reopen the Account panel in the PanGrab extension to see your membership.</p>' +
+    '<p>本页面可以关闭 / You can close this page.</p>';
 }
 
 /* ----------------------------- 账号 ----------------------------- */
@@ -184,75 +224,112 @@ app.get("/api/admin/stats", (req, res) => {
   });
 });
 
-/* --------------------------- 支付宝下单/支付 --------------------------- */
-// 创建订单并返回支付宝支付跳转地址
+/* --------------------------- 支付：渠道 & 下单 --------------------------- */
+// 查询可用支付渠道与套餐（购买页用）
+app.get("/api/pay/providers", (_req, res) => {
+  res.json({
+    providers: {
+      alipay: alipay.enabled(),
+      lemonsqueezy: lemon.enabled()
+    },
+    // 支付宝按人民币定价；Lemon Squeezy 价格在其后台按变体设置，按用户所在地货币结算
+    plans: {
+      month: { days: PLANS.month.days, amount: PLANS.month.amount },
+      quarter: { days: PLANS.quarter.days, amount: PLANS.quarter.amount },
+      year: { days: PLANS.year.days, amount: PLANS.year.amount }
+    }
+  });
+});
+
+// 创建订单并返回支付跳转地址。body: { plan, provider? }
 app.post("/api/order/create", auth, async (req, res) => {
-  if (!alipay.enabled())
-    return res.status(503).json({ error: "支付未配置，请使用兑换码或联系客服" });
   const plan = (req.body && req.body.plan || "").trim();
   const p = PLANS[plan];
   if (!p) return res.status(400).json({ error: "套餐无效" });
+
+  const provider = (req.body && req.body.provider || "").trim() || defaultProvider();
+  if (!provider) return res.status(503).json({ error: "支付未配置，请使用兑换码或联系客服" });
+
   const outTradeNo = "PG" + Date.now() + crypto.randomBytes(3).toString("hex");
-  db.prepare(`INSERT INTO orders(out_trade_no, user_id, plan, days, amount, status, created_at)
-              VALUES(?,?,?,?,?,'pending',?)`)
-    .run(outTradeNo, req.user.id, plan, p.days, p.amount, now());
+
   try {
-    const payUrl = alipay.pagePayUrl({
-      outTradeNo: outTradeNo,
-      amount: p.amount,
-      subject: p.subject,
-      notifyUrl: PUBLIC_BASE_URL + "/api/alipay/notify",
-      returnUrl: PUBLIC_BASE_URL + "/api/alipay/return"
-    });
-    res.json({ ok: true, out_trade_no: outTradeNo, payUrl: payUrl });
+    if (provider === "alipay") {
+      if (!alipay.enabled()) return res.status(503).json({ error: "支付宝未配置" });
+      db.prepare(`INSERT INTO orders(out_trade_no, user_id, plan, days, amount, status, provider, currency, created_at)
+                  VALUES(?,?,?,?,?,'pending','alipay','CNY',?)`)
+        .run(outTradeNo, req.user.id, plan, p.days, p.amount, now());
+      const payUrl = alipay.pagePayUrl({
+        outTradeNo: outTradeNo,
+        amount: p.amount,
+        subject: p.subject,
+        notifyUrl: PUBLIC_BASE_URL + "/api/alipay/notify",
+        returnUrl: PUBLIC_BASE_URL + "/api/alipay/return"
+      });
+      return res.json({ ok: true, out_trade_no: outTradeNo, provider: provider, payUrl: payUrl });
+    }
+
+    if (provider === "lemonsqueezy") {
+      if (!lemon.enabled()) return res.status(503).json({ error: "国际支付未配置" });
+      if (!lemon.variantFor(plan)) return res.status(503).json({ error: "该套餐未配置国际支付" });
+      db.prepare(`INSERT INTO orders(out_trade_no, user_id, plan, days, amount, status, provider, currency, created_at)
+                  VALUES(?,?,?,?,?,'pending','lemonsqueezy','USD',?)`)
+        .run(outTradeNo, req.user.id, plan, p.days, "", now());
+      const payUrl = await lemon.createCheckout({
+        plan: plan,
+        custom: { out_trade_no: outTradeNo, user_id: String(req.user.id), plan: plan },
+        redirectUrl: PUBLIC_BASE_URL + "/api/pay/return"
+      });
+      return res.json({ ok: true, out_trade_no: outTradeNo, provider: provider, payUrl: payUrl });
+    }
+
+    return res.status(400).json({ error: "不支持的支付渠道" });
   } catch (e) {
-    res.status(500).json({ error: "下单失败：" + (e.message || e) });
+    return res.status(500).json({ error: "下单失败：" + (e.message || e) });
   }
 });
 
 // 查询订单状态（前端轮询用）
 app.get("/api/order/status", auth, (req, res) => {
   const ono = (req.query.out_trade_no || "").trim();
-  const row = db.prepare("SELECT out_trade_no, status, plan, amount, paid_at FROM orders WHERE out_trade_no=? AND user_id=?")
+  const row = db.prepare("SELECT out_trade_no, status, plan, amount, provider, currency, paid_at FROM orders WHERE out_trade_no=? AND user_id=?")
     .get(ono, req.user.id);
   if (!row) return res.status(404).json({ error: "订单不存在" });
   res.json({ ok: true, order: row });
 });
 
+/* --------------------------- 支付宝回调 --------------------------- */
 // 支付宝异步通知（服务器对服务器）—— 必须返回纯文本 success
 app.post("/api/alipay/notify", (req, res) => {
   const params = req.body || {};
   if (!alipay.verifyNotify(params)) { res.send("fail"); return; }
   const status = params.trade_status;
   if (status === "TRADE_SUCCESS" || status === "TRADE_FINISHED") {
-    const order = db.prepare("SELECT * FROM orders WHERE out_trade_no=?").get(params.out_trade_no);
-    if (order && order.status !== "paid") {
-      const user = db.prepare("SELECT * FROM users WHERE id=?").get(order.user_id);
-      if (user) {
-        const base = isPro(user) ? user.pro_until : now();
-        const newUntil = base + order.days * 24 * 3600 * 1000;
-        const tx = db.transaction(() => {
-          db.prepare("UPDATE orders SET status='paid', trade_no=?, paid_at=? WHERE out_trade_no=?")
-            .run(params.trade_no || "", now(), order.out_trade_no);
-          db.prepare("UPDATE users SET pro_until=? WHERE id=?").run(newUntil, user.id);
-        });
-        tx();
-      }
-    }
+    creditOrder(params.out_trade_no, params.trade_no || "");
   }
   res.send("success");
 });
 
-// 支付完成同步跳转页（用户浏览器看到的页面）
-app.get("/api/alipay/return", (_req, res) => {
-  res.type("html").send(
-    '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>支付完成</title><style>body{font-family:system-ui,-apple-system,sans-serif;text-align:center;' +
-    'padding:60px 20px;color:#1f2733}h2{color:#15a05b}p{color:#7a869a}</style>' +
-    '<h2>✓ 支付完成</h2><p>请回到 PanGrab 扩展的「账号 / 云同步」面板，重新打开即可看到会员状态已更新。</p>' +
-    '<p>本页面可以关闭。</p>'
-  );
+// 支付完成同步跳转页（支付宝 return_url）
+app.get("/api/alipay/return", (_req, res) => { res.type("html").send(payDonePage()); });
+
+/* --------------------------- Lemon Squeezy 回调 --------------------------- */
+// webhook：验签后给账号加会员（order_created = 已支付）
+app.post("/api/lemonsqueezy/webhook", (req, res) => {
+  const sig = req.headers["x-signature"] || "";
+  if (!lemon.verifyWebhook(req.rawBody, sig)) return res.status(401).send("bad signature");
+  const eventName = req.headers["x-event-name"] || "";
+  const body = req.body || {};
+  if (eventName === "order_created") {
+    const custom = (body.meta && body.meta.custom_data) || {};
+    const outTradeNo = custom.out_trade_no;
+    const tradeNo = (body.data && body.data.id) ? String(body.data.id) : "";
+    if (outTradeNo) creditOrder(outTradeNo, tradeNo);
+  }
+  res.send("ok");
 });
+
+// 国际支付完成跳转页（Lemon Squeezy redirect_url）
+app.get("/api/pay/return", (_req, res) => { res.type("html").send(payDonePage()); });
 
 // 购买页
 app.get("/buy", (_req, res) => {
