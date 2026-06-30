@@ -5,6 +5,6 @@
  */
 (function (root) {
   root.PanGrabProConfig = {
-    apiBase: "http://34.64.114.22:8787/"
+    apiBase: "http://34.64.114.22:8787"
   };
 })(typeof self !== "undefined" ? self : this);
