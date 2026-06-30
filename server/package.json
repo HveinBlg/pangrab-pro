@@ -1,0 +1,19 @@
+{
+  "name": "pangrab-pro-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PanGrab Pro 后端：账号、云同步、会员校验、兑换码",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
