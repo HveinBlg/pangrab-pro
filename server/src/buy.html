@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>开通 PanGrab Pro</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC", sans-serif;
+    background: #f4f6fb; color: #1f2733; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .card {
+    background: #fff; border-radius: 16px; box-shadow: 0 10px 40px rgba(20,40,80,.08);
+    width: 100%; max-width: 460px; padding: 28px;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #7a869a; font-size: 13px; margin-bottom: 20px; }
+  .plans { display: flex; flex-direction: column; gap: 12px; }
+  .plan {
+    border: 2px solid #e6eaf2; border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; transition: .15s;
+  }
+  .plan:hover { border-color: #b9cdfb; }
+  .plan.active { border-color: #3d7fff; background: #f3f8ff; }
+  .plan .name { font-weight: 600; font-size: 15px; }
+  .plan .desc { color: #7a869a; font-size: 12px; margin-top: 2px; }
+  .plan .price { font-size: 20px; font-weight: 700; color: #3d7fff; }
+  .plan .price small { font-size: 12px; font-weight: 500; color: #7a869a; }
+  .btn {
+    width: 100%; margin-top: 22px; padding: 13px; border: none; border-radius: 12px;
+    background: #1677ff; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn:disabled { background: #a9c4f5; cursor: not-allowed; }
+  .msg { font-size: 13px; margin-top: 14px; min-height: 18px; text-align: center; }
+  .msg.err { color: #cf1322; }
+  .msg.ok { color: #15a05b; }
+  .foot { margin-top: 18px; font-size: 12px; color: #9aa4b5; text-align: center; line-height: 1.7; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>开通 PanGrab Pro</h1>
+    <div class="sub">选择套餐，使用支付宝安全支付，到账后自动开通会员。</div>
+    <div class="plans" id="plans">
+      <div class="plan active" data-plan="month">
+        <div><div class="name">月卡</div><div class="desc">30 天 · 云同步无限制</div></div>
+        <div class="price">¥9.9<small>/月</small></div>
+      </div>
+      <div class="plan" data-plan="quarter">
+        <div><div class="name">季卡</div><div class="desc">90 天 · 更划算</div></div>
+        <div class="price">¥25<small>/季</small></div>
+      </div>
+      <div class="plan" data-plan="year">
+        <div><div class="name">年卡</div><div class="desc">365 天 · 最超值</div></div>
+        <div class="price">¥68<small>/年</small></div>
+      </div>
+    </div>
+    <button class="btn" id="payBtn">使用支付宝支付</button>
+    <div class="msg" id="msg"></div>
+    <div class="foot">
+      支付遇到问题？可在扩展中使用兑换码激活。<br/>
+      支付完成后请返回扩展「账号 / 云同步」面板刷新。
+    </div>
+  </div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var token = params.get("token") || "";
+  var selected = "month";
+  var plansEl = document.getElementById("plans");
+  var btn = document.getElementById("payBtn");
+  var msgEl = document.getElementById("msg");
+
+  function msg(t, ok) { msgEl.textContent = t || ""; msgEl.className = "msg " + (ok ? "ok" : "err"); }
+
+  plansEl.addEventListener("click", function (e) {
+    var el = e.target.closest(".plan");
+    if (!el) return;
+    Array.prototype.forEach.call(plansEl.querySelectorAll(".plan"), function (p) { p.classList.remove("active"); });
+    el.classList.add("active");
+    selected = el.getAttribute("data-plan");
+  });
+
+  if (!token) { msg("缺少登录凭证，请从扩展内的「购买会员」按钮进入本页。"); btn.disabled = true; }
+
+  btn.addEventListener("click", async function () {
+    if (!token) return;
+    btn.disabled = true; msg("正在创建订单…", true);
+    try {
+      var r = await fetch("/api/order/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ plan: selected })
+      });
+      var data = await r.json();
+      if (!r.ok) throw new Error(data.error || "下单失败");
+      msg("正在跳转支付宝…", true);
+      location.href = data.payUrl;
+    } catch (e) {
+      msg(e.message || "下单失败"); btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

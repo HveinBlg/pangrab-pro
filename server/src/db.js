@@ -29,6 +29,18 @@ CREATE TABLE IF NOT EXISTS redeem_codes (
   used_at    INTEGER,
   created_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS orders (
+  out_trade_no TEXT PRIMARY KEY,        -- 商户订单号
+  user_id      INTEGER NOT NULL,
+  plan         TEXT,
+  days         INTEGER NOT NULL,
+  amount       TEXT NOT NULL,           -- 金额(元)，字符串如 "9.90"
+  status       TEXT DEFAULT 'pending',  -- pending | paid
+  trade_no     TEXT,                    -- 支付宝交易号
+  created_at   INTEGER NOT NULL,
+  paid_at      INTEGER
+);
 `);
 
 module.exports = db;
