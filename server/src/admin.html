@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PanGrab Pro 管理后台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f6fb; color: #1f2733; padding: 24px; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 20px; margin-bottom: 16px; }
+  .card { background: #fff; border: 1px solid #e6eaf2; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  input, button { font-size: 14px; font-family: inherit; }
+  input { padding: 8px 10px; border: 1px solid #e6eaf2; border-radius: 8px; }
+  button { padding: 8px 16px; border: none; border-radius: 8px; background: #3d7fff; color: #fff; cursor: pointer; }
+  button.ghost { background: #f3f5fa; color: #1f2733; border: 1px solid #e6eaf2; }
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat { background: #eef2fb; border-radius: 10px; padding: 12px 16px; min-width: 110px; }
+  .stat b { font-size: 22px; display: block; }
+  .stat span { font-size: 12px; color: #7a869a; }
+  label { font-size: 13px; color: #7a869a; }
+  textarea { width: 100%; height: 160px; margin-top: 10px; border: 1px solid #e6eaf2; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 13px; }
+  .msg { font-size: 13px; color: #cf1322; margin-top: 8px; min-height: 16px; }
+  .hint { font-size: 12px; color: #7a869a; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef0f4; }
+  .pill { font-size: 11px; padding: 1px 7px; border-radius: 999px; color: #fff; }
+  .pill.unused { background: #15a05b; } .pill.used { background: #7a869a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PanGrab Pro 管理后台</h1>
+
+  <div class="card">
+    <div class="row">
+      <label>管理员密钥(ADMIN_KEY)</label>
+      <input id="key" type="password" placeholder="输入 ADMIN_KEY" style="flex:1;min-width:240px" />
+      <button onclick="saveKey()">保存并加载</button>
+    </div>
+    <div class="hint">密钥仅保存在本浏览器(localStorage)，用于调用管理接口。</div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="stats" id="stats"><span class="hint">输入密钥后显示统计…</span></div>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size:15px;margin-bottom:10px">生成兑换码</h3>
+    <div class="row">
+      <label>数量</label><input id="count" type="number" value="10" style="width:90px" />
+      <label>天数</label><input id="days" type="number" value="30" style="width:90px" />
+      <button onclick="gen()">生成</button>
+      <span class="hint">30=月卡 / 90=季卡 / 365=年卡</span>
+    </div>
+    <textarea id="genOut" placeholder="生成的兑换码会显示在这里，复制保存好" readonly></textarea>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <h3 style="font-size:15px;flex:1">兑换码库存</h3>
+      <button class="ghost" onclick="list('unused')">只看未使用</button>
+      <button class="ghost" onclick="list('all')">全部</button>
+    </div>
+    <div id="codes"></div>
+  </div>
+</div>
+
+<script>
+  var API = location.origin;
+  function key() { return localStorage.getItem("pg_admin_key") || ""; }
+  function setMsg(t) { document.getElementById("msg").textContent = t || ""; }
+  function saveKey() {
+    localStorage.setItem("pg_admin_key", document.getElementById("key").value.trim());
+    setMsg(""); loadStats(); list("unused");
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    var res = await fetch(API + path, {
+      method: opts.method || "GET",
+      headers: { "x-admin-key": key(), "Content-Type": "application/json" },
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    var data = await res.json().catch(function(){return{};});
+    if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+    return data;
+  }
+  async function loadStats() {
+    try {
+      var s = await api("/api/admin/stats");
+      document.getElementById("stats").innerHTML =
+        stat(s.users, "注册用户") + stat(s.pro_users, "付费会员") +
+        stat(s.codes_unused, "剩余库存") + stat(s.codes_used, "已用码") + stat(s.codes_total, "总码数");
+    } catch (e) { setMsg(e.message); }
+  }
+  function stat(n, label) { return '<div class="stat"><b>' + (n||0) + '</b><span>' + label + '</span></div>'; }
+  async function gen() {
+    try {
+      var count = parseInt(document.getElementById("count").value) || 1;
+      var days = parseInt(document.getElementById("days").value) || 30;
+      var r = await api("/api/admin/codes", { method: "POST", body: { count: count, days: days } });
+      document.getElementById("genOut").value = r.codes.join("\n");
+      loadStats(); list("unused");
+    } catch (e) { setMsg(e.message); }
+  }
+  async function list(status) {
+    try {
+      var r = await api("/api/admin/codes?status=" + status);
+      var html = '<table><tr><th>兑换码</th><th>天数</th><th>状态</th><th>使用时间</th></tr>';
+      r.codes.forEach(function (c) {
+        html += '<tr><td>' + c.code + '</td><td>' + c.days + '</td><td>' +
+          (c.used_by ? '<span class="pill used">已用</span>' : '<span class="pill unused">未用</span>') +
+          '</td><td>' + (c.used_at ? new Date(c.used_at).toLocaleString() : '-') + '</td></tr>';
+      });
+      html += '</table>';
+      document.getElementById("codes").innerHTML = "共 " + r.count + " 条" + html;
+    } catch (e) { setMsg(e.message); }
+  }
+  // 初始化
+  (function () {
+    document.getElementById("key").value = key();
+    if (key()) { loadStats(); list("unused"); }
+  })();
+</script>
+</body>
+</html>

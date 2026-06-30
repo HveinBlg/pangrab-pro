@@ -175,4 +175,9 @@ app.get("/api/admin/stats", (req, res) => {
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, time: now() }));
 
+// 管理后台网页（静态页，调用需输入 ADMIN_KEY）
+app.get("/admin", (_req, res) => {
+  res.sendFile(require("path").join(__dirname, "admin.html"));
+});
+
 app.listen(PORT, () => console.log(`PanGrab Pro server on :${PORT}`));
