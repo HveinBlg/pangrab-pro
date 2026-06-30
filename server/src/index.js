@@ -135,6 +135,44 @@ app.post("/api/admin/codes", (req, res) => {
   res.json({ ok: true, days, codes });
 });
 
+/* --------------------------- 查库存 / 列码 --------------------------- */
+app.get("/api/admin/codes", (req, res) => {
+  if ((req.headers["x-admin-key"] || "") !== ADMIN_KEY)
+    return res.status(401).json({ error: "管理员密钥错误" });
+  const status = (req.query.status || "all").toLowerCase(); // unused | used | all
+  const where = status === "unused" ? "WHERE used_by IS NULL"
+    : status === "used" ? "WHERE used_by IS NOT NULL" : "";
+  const rows = db.prepare(
+    "SELECT code, days, used_by, used_at, created_at FROM redeem_codes " + where + " ORDER BY created_at DESC"
+  ).all();
+  const s = db.prepare(
+    "SELECT COUNT(*) total, SUM(CASE WHEN used_by IS NULL THEN 1 ELSE 0 END) unused FROM redeem_codes"
+  ).get();
+  res.json({
+    stats: { total: s.total, unused: s.unused || 0, used: s.total - (s.unused || 0) },
+    count: rows.length,
+    codes: rows
+  });
+});
+
+/* --------------------------- 业务统计 --------------------------- */
+app.get("/api/admin/stats", (req, res) => {
+  if ((req.headers["x-admin-key"] || "") !== ADMIN_KEY)
+    return res.status(401).json({ error: "管理员密钥错误" });
+  const users = db.prepare("SELECT COUNT(*) c FROM users").get().c;
+  const pro = db.prepare("SELECT COUNT(*) c FROM users WHERE pro_until > ?").get(now()).c;
+  const codes = db.prepare(
+    "SELECT COUNT(*) total, SUM(CASE WHEN used_by IS NULL THEN 1 ELSE 0 END) unused FROM redeem_codes"
+  ).get();
+  res.json({
+    users: users,
+    pro_users: pro,
+    codes_total: codes.total,
+    codes_unused: codes.unused || 0,
+    codes_used: codes.total - (codes.unused || 0)
+  });
+});
+
 app.get("/api/health", (_req, res) => res.json({ ok: true, time: now() }));
 
 app.listen(PORT, () => console.log(`PanGrab Pro server on :${PORT}`));
