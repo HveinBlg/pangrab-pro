@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="options.css" />
+  <title>PanGrab 网盘抓手 · 收藏管理</title>
+</head>
+<body>
+  <header class="top">
+    <div class="title">
+      <h1>PanGrab 网盘抓手 · 收藏管理</h1>
+    </div>
+    <div class="actions">
+      <input type="file" id="importFile" accept="application/json" hidden />
+      <button id="followBtn" class="ghost" hidden>📢 关注频道</button>
+      <button id="newCategory" class="ghost">+ 新建分类</button>
+      <button id="importBtn" class="ghost">导入</button>
+      <button id="exportJson" class="ghost">导出 JSON</button>
+      <button id="exportCsv" class="ghost">导出 CSV</button>
+      <button id="checkLive" class="ghost">检测失效</button>
+      <button id="cleanInvalid" class="ghost">清理无效</button>
+      <button id="clearAll" class="danger">清空</button>
+    </div>
+  </header>
+
+  <section class="stats" id="stats"></section>
+
+  <section class="controls">
+    <input type="search" id="search" placeholder="搜索链接、备注、标题、提取码…" />
+    <div id="filterProvider" class="dd" data-role="filterProvider"></div>
+    <div id="filterCategory" class="dd" data-role="filterCategory"></div>
+    <div id="sortBy" class="dd" data-role="sortBy"></div>
+  </section>
+
+  <section id="batchBar" class="batch-bar">
+    <label class="batch-all"><input type="checkbox" id="batchSelectAll" /> 全选当前</label>
+    <span id="batchCount" class="batch-count">未选择</span>
+    <span class="batch-actions" id="batchActions" hidden>
+      <div id="batchCategory" class="dd" data-role="batch" title="批量归类到…"></div>
+      <button id="batchApply" class="ghost">应用分类</button>
+      <button id="batchDelete" class="danger">删除选中</button>
+      <button id="batchClear" class="ghost">取消选择</button>
+    </span>
+  </section>
+
+  <main id="grid" class="grid"></main>
+
+  <div id="emptyState" class="empty-state" hidden>
+    <p>还没有收藏任何网盘链接。</p>
+    <p class="hint">浏览网页时点击扩展图标，或右键「收藏此网盘链接」即可添加。</p>
+  </div>
+
+  <!-- 编辑弹层 -->
+  <div id="editModal" class="modal" hidden>
+    <div class="modal-card">
+      <button type="button" id="editClose" class="modal-close" aria-label="关闭">✕</button>
+      <h3>编辑收藏</h3>
+      <label>标题 / 资源名
+        <input type="text" id="editTitle" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="给这个资源起个名字" />
+      </label>
+      <label>分类
+        <input type="text" id="editCategory" list="categoryList" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="如：电影 / 学习资料 / 软件" />
+        <datalist id="categoryList"></datalist>
+      </label>
+      <label>标签（逗号分隔）
+        <input type="text" id="editTags" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="如：高清,合集" />
+      </label>
+      <label>提取码
+        <input type="text" id="editCode" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="提取码 / 访问密码" />
+      </label>
+      <label>备注
+        <textarea id="editNote" rows="3" placeholder="备注信息"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" id="editCancel" class="ghost">取消</button>
+        <button type="button" id="editSave" class="primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用对话框（替代浏览器原生 prompt / confirm） -->
+  <div id="dialog" class="modal" hidden>
+    <div class="modal-card dialog-card">
+      <h3 id="dialogTitle"></h3>
+      <p id="dialogMessage" class="dialog-message" hidden></p>
+      <input type="text" id="dialogInput" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other" hidden />
+      <div class="modal-actions">
+        <button type="button" id="dialogCancel" class="ghost">取消</button>
+        <button type="button" id="dialogOk" class="primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- 更多资源 · 关注频道 -->
+  <div id="followModal" class="modal" hidden>
+    <div class="modal-card">
+      <button type="button" id="followClose" class="modal-close" aria-label="关闭">✕</button>
+      <h3>更多资源</h3>
+      <div id="followBody" class="follow-body"></div>
+    </div>
+  </div>
+
+  <script src="../detector.js"></script>
+  <script src="../promos.js"></script>
+  <script src="../pro-config.js"></script>
+  <script src="../api.js"></script>
+  <script src="options.js"></script>
+  <script src="pro.js"></script>
+</body>
+</html>

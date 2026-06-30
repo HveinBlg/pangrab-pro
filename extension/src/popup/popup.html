@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="popup.css" />
+  <title>PanGrab 网盘抓手</title>
+</head>
+<body>
+  <header class="pop-header">
+    <div class="brand">
+      <span class="brand-name">PanGrab 抓手</span>
+    </div>
+    <div class="header-btns">
+      <button id="followBtn" class="link-btn" title="更多资源 · 关注频道" hidden>📢 频道</button>
+      <button id="openManager" class="link-btn" title="打开收藏管理">管理 ▸</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <span id="summary" class="summary">正在扫描当前页…</span>
+    <div class="toolbar-btns">
+      <button id="rescan" class="ghost-btn" title="重新扫描当前页">↻ 重扫</button>
+      <button id="resetScan" class="ghost-btn" title="清空本页已检测的链接，重新开始累积">清空检测</button>
+    </div>
+  </div>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <main id="list" class="list">
+    <!-- 链接卡片动态渲染 -->
+  </main>
+
+  <footer class="pop-footer">
+    <label class="select-all">
+      <input type="checkbox" id="selectAll" /> 全选
+    </label>
+    <button id="saveSelected" class="primary-btn" disabled>收藏选中 (0)</button>
+  </footer>
+
+  <div id="recommend" class="recommend" hidden>
+    <span id="recLabel" class="rec-label"></span>
+    <a id="recLink" class="rec-link" target="_blank" rel="noreferrer"></a>
+    <button id="recRefresh" class="rec-refresh" title="换一个">⟳</button>
+  </div>
+
+  <div id="promo" class="promo" hidden>
+    <span class="promo-tag">推广</span>
+    <a id="promoLink" class="promo-link" target="_blank" rel="noreferrer"></a>
+    <button id="promoClose" class="promo-close" title="不再显示">✕</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="../detector.js"></script>
+  <script src="../promos.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
