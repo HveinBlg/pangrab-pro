@@ -7,12 +7,20 @@
 let sdk = null;
 let inited = false;
 
+// 清洗密钥：去掉 PEM 头尾和所有空白，只留 base64 主体，交给 SDK 按 keyType 重新包装
+function cleanKey(key) {
+  return String(key || "")
+    .replace(/-----BEGIN[^-]+-----/g, "")
+    .replace(/-----END[^-]+-----/g, "")
+    .replace(/\s+/g, "");
+}
+
 function init() {
   if (inited) return sdk;
   inited = true;
   const appId = process.env.ALIPAY_APP_ID;
-  const privateKey = process.env.ALIPAY_PRIVATE_KEY;
-  const alipayPublicKey = process.env.ALIPAY_PUBLIC_KEY;
+  const privateKey = cleanKey(process.env.ALIPAY_PRIVATE_KEY);
+  const alipayPublicKey = cleanKey(process.env.ALIPAY_PUBLIC_KEY);
   if (!appId || !privateKey || !alipayPublicKey) { sdk = null; return null; }
   const mod = require("alipay-sdk");
   const AlipaySdk = mod.default || mod.AlipaySdk || mod;
