@@ -1,8 +1,10 @@
 "use strict";
+// 从 server/.env 读取配置（无论从哪个目录启动都能定位到）
+require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") });
 /**
  * PanGrab Pro 后端 API
  * 功能：账号注册/登录、会员状态、云同步(Pro)、兑换码激活、管理员发码。
- * 启动：JWT_SECRET=xxx ADMIN_KEY=yyy node src/index.js
+ * 启动：node src/index.js（配置写在 server/.env），或用环境变量覆盖
  */
 const express = require("express");
 const cors = require("cors");
