@@ -71,13 +71,15 @@
   async function refresh() {
     msg("");
     var token = await ProAPI.getToken();
-    if (!token) { renderAuth(); return; }
+    if (!token) { if (self.PanGrabPro) self.PanGrabPro.clearState(); renderAuth(); return; }
     try {
       var r = await ProAPI.me();
       state.user = r.user;
+      if (self.PanGrabPro) self.PanGrabPro.setState(r.user); // 缓存会员状态供门控使用
       renderAccount();
     } catch (e) {
       await ProAPI.clearToken();
+      if (self.PanGrabPro) self.PanGrabPro.clearState();
       renderAuth();
     }
   }
@@ -106,6 +108,7 @@
         var r = mode === "login" ? await ProAPI.login(email, pass) : await ProAPI.register(email, pass);
         await ProAPI.setToken(r.token);
         state.user = r.user;
+        if (self.PanGrabPro) self.PanGrabPro.setState(r.user);
         msg(mode === "login" ? "登录成功" : "注册成功", true);
         renderAccount();
       } catch (e) { msg(e.message || "失败"); }
@@ -116,6 +119,18 @@
     if (!ts) return "-";
     var d = new Date(ts), p = function (n) { return n < 10 ? "0" + n : n; };
     return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  }
+
+  function renderLastSync() {
+    var el = document.getElementById("proLastSync");
+    if (!el) return;
+    chrome.storage.local.get(["last_sync"], function (x) {
+      var s = x && x.last_sync;
+      if (!s || !s.at) { el.textContent = "尚未自动同步"; return; }
+      var d = new Date(s.at), p = function (n) { return n < 10 ? "0" + n : n; };
+      var t = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+      el.textContent = "上次自动同步：" + t + (s.ok ? "" : "（失败，将稍后重试）");
+    });
   }
 
   function renderAccount() {
@@ -135,6 +150,10 @@
         '<button class="pro-btn primary" id="proUpload">⬆ 上传到云端</button>' +
         '<button class="pro-btn ghost" id="proDownload">⬇ 从云端下载并合并</button>' +
       "</div>" +
+      '<label class="pro-autosync" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#1f2733;cursor:pointer">' +
+        '<input type="checkbox" id="proAutoSync"/> 自动同步（每 30 分钟与云端合并，多设备保持一致）' +
+      "</label>" +
+      '<div id="proLastSync" class="pro-lastsync" style="font-size:12px;color:#7a869a;margin-top:6px"></div>' +
       '<hr class="pro-hr"/>' +
       '<div class="pro-row"><button class="pro-btn ghost" id="proLogout">退出登录</button></div>';
 
@@ -144,12 +163,34 @@
       try {
         var r = await ProAPI.redeem(code);
         state.user = r.user;
+        if (self.PanGrabPro) self.PanGrabPro.setState(r.user);
         msg("激活成功，增加 " + r.added_days + " 天会员", true);
         renderAccount();
       } catch (e) { msg(e.message || "兑换失败"); }
     });
     body.querySelector("#proUpload").addEventListener("click", uploadSync);
     body.querySelector("#proDownload").addEventListener("click", downloadSync);
+
+    // 自动同步开关 + 上次同步时间
+    var autoChk = body.querySelector("#proAutoSync");
+    if (autoChk) {
+      chrome.storage.local.get(["auto_sync"], function (x) { autoChk.checked = !!(x && x.auto_sync); });
+      autoChk.addEventListener("change", function () {
+        if (autoChk.checked && !(state.user && state.user.is_pro)) {
+          autoChk.checked = false;
+          msg("自动同步需要 Pro 会员"); return;
+        }
+        chrome.storage.local.set({ auto_sync: autoChk.checked }, function () {
+          if (autoChk.checked) {
+            msg("已开启自动同步，正在同步…", true);
+            chrome.runtime.sendMessage({ type: "AUTO_SYNC_NOW" }, function () { renderLastSync(); });
+          } else {
+            msg("已关闭自动同步", true);
+          }
+        });
+      });
+    }
+    renderLastSync();
     body.querySelector("#proBuy").addEventListener("click", async function () {
       var token = await ProAPI.getToken();
       if (!token) { msg("请先登录后再购买"); return; }
@@ -158,7 +199,9 @@
       msg("已打开购买页，完成支付后回到本面板重新打开即可刷新会员状态", true);
     });
     body.querySelector("#proLogout").addEventListener("click", async function () {
-      await ProAPI.clearToken(); state.user = null; renderAuth(); msg("已退出", true);
+      await ProAPI.clearToken();
+      if (self.PanGrabPro) self.PanGrabPro.clearState();
+      state.user = null; renderAuth(); msg("已退出", true);
     });
   }
 

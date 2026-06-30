@@ -5,9 +5,10 @@
  * - 提供右键菜单「收藏选中的网盘链接」
  * - 统一处理保存逻辑（写入 chrome.storage.local）
  */
-importScripts("detector.js");
+importScripts("detector.js", "pro-config.js", "pro-state.js");
 
 var D = self.NetdiskDetector;
+var PRO = self.PanGrabPro;
 var STORE_KEY = "savedLinks";
 
 /* ----------------------------- 角标管理 ----------------------------- */
@@ -41,17 +42,23 @@ function setSaved(list) {
 
 /**
  * 保存一批链接，自动按 key 去重。
- * 返回 { added, skipped }
+ * 免费版收藏上限 FREE_MAX_LINKS，超出不再写入并返回 limitReached。
+ * 返回 { added, skipped, total, limitReached, max, is_pro }
  */
 async function saveLinks(links) {
   var saved = await getSaved();
   var index = {};
   saved.forEach(function (l) { index[l.key] = true; });
 
-  var added = 0, skipped = 0;
+  var isPro = await PRO.isProNow();
+  var MAX = PRO.LIMITS.FREE_MAX_LINKS;
+
+  var added = 0, skipped = 0, limitReached = false;
   links.forEach(function (l) {
     if (!l || !l.key) return;
     if (index[l.key]) { skipped++; return; }
+    // 免费版：达到上限后不再写入
+    if (!isPro && saved.length >= MAX) { limitReached = true; return; }
     index[l.key] = true;
     saved.push({
       key: l.key,
@@ -73,7 +80,7 @@ async function saveLinks(links) {
   });
 
   await setSaved(saved);
-  return { added: added, skipped: skipped, total: saved.length };
+  return { added: added, skipped: skipped, total: saved.length, limitReached: limitReached, max: MAX, is_pro: isPro };
 }
 
 /* ------------------------------ 消息处理 ----------------------------- */
@@ -107,6 +114,11 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
   if (msg.type === "CHECK_LINK") {
     checkLink(msg.url).then(function (r) { sendResponse(r); });
     return true; // 异步响应
+  }
+
+  if (msg.type === "AUTO_SYNC_NOW") {
+    autoSyncIfEnabled().then(function () { sendResponse({ ok: true }); });
+    return true;
   }
 });
 
@@ -143,6 +155,13 @@ chrome.runtime.onInstalled.addListener(function () {
     title: "收藏此网盘链接",
     contexts: ["link", "selection"]
   });
+  ensureAlarms();
+  PRO.refreshFromServer();
+});
+
+chrome.runtime.onStartup.addListener(function () {
+  ensureAlarms();
+  PRO.refreshFromServer();
 });
 
 chrome.contextMenus.onClicked.addListener(async function (info, tab) {
@@ -179,9 +198,14 @@ chrome.contextMenus.onClicked.addListener(async function (info, tab) {
   }
 
   var result = await saveLinks(links);
+  if (result.limitReached && result.added === 0) {
+    notify("已达免费版收藏上限", "免费版最多收藏 " + result.max + " 条。开通 Pro 会员可无限收藏（在收藏管理页「账号 / 云同步」开通）。");
+    return;
+  }
   notify(
     "已收藏 " + result.added + " 条链接",
-    result.skipped > 0 ? "（" + result.skipped + " 条已存在，已跳过）" : "共 " + result.total + " 条收藏。"
+    (result.limitReached ? "部分未保存：已达免费上限 " + result.max + " 条，开通 Pro 解锁无限收藏。" :
+      (result.skipped > 0 ? "（" + result.skipped + " 条已存在，已跳过）" : "共 " + result.total + " 条收藏。"))
   );
 });
 
@@ -194,4 +218,79 @@ function notify(title, message) {
       message: message
     });
   } catch (e) { /* ignore */ }
+}
+
+/* --------------------- 会员状态刷新 & 云端自动同步（Pro，功能E） --------------------- */
+
+function ensureAlarms() {
+  try { chrome.alarms.create("pg-sync", { periodInMinutes: 30, delayInMinutes: 1 }); } catch (e) { /* ignore */ }
+}
+
+chrome.alarms.onAlarm.addListener(function (alarm) {
+  if (alarm && alarm.name === "pg-sync") {
+    PRO.refreshFromServer().then(autoSyncIfEnabled);
+  }
+});
+
+function getFlag(key) {
+  return new Promise(function (r) { chrome.storage.local.get([key], function (x) { r(x && x[key]); }); });
+}
+function setLastSync(ts, ok) {
+  chrome.storage.local.set({ last_sync: { at: ts, ok: !!ok } });
+}
+
+// 自动同步：开启开关 + Pro + 已登录时，与云端做并集合并（拉取→合并→回传，不删除任何一端数据）
+async function autoSyncIfEnabled() {
+  try {
+    var on = await getFlag("auto_sync");
+    if (!on) return;
+    var isPro = await PRO.isProNow();
+    if (!isPro) return;
+    var token = await PRO.getToken();
+    if (!token) return;
+    var base = PRO.base();
+    var headers = { "Content-Type": "application/json", "Authorization": "Bearer " + token };
+
+    // 拉取云端
+    var getRes = await fetch(base + "/api/sync", { headers: headers });
+    if (!getRes.ok) { setLastSync(Date.now(), false); return; }
+    var cloud = (await getRes.json()).payload || { links: [], categories: [] };
+
+    var local = await readLocalForSync();
+
+    // 并集合并：链接按 key 去重，分类取并集
+    var map = {};
+    (local.links || []).forEach(function (l) { if (l && l.key) map[l.key] = l; });
+    (cloud.links || []).forEach(function (l) { if (l && l.key && !map[l.key]) map[l.key] = l; });
+    var mergedLinks = Object.keys(map).map(function (k) { return map[k]; });
+    var catSet = {};
+    (local.categories || []).concat(cloud.categories || []).forEach(function (c) { if (c) catSet[c] = true; });
+    var mergedCats = Object.keys(catSet);
+
+    // 写回本地（仅当有变化时）
+    if (mergedLinks.length !== (local.links || []).length || mergedCats.length !== (local.categories || []).length) {
+      await writeLocalForSync(mergedLinks, mergedCats);
+    }
+    // 回传云端，保持两端一致
+    await fetch(base + "/api/sync", {
+      method: "PUT", headers: headers,
+      body: JSON.stringify({ payload: { links: mergedLinks, categories: mergedCats } })
+    });
+    setLastSync(Date.now(), true);
+  } catch (e) {
+    setLastSync(Date.now(), false);
+  }
+}
+
+function readLocalForSync() {
+  return new Promise(function (r) {
+    chrome.storage.local.get([STORE_KEY, "categories"], function (x) {
+      r({ links: (x && x[STORE_KEY]) || [], categories: (x && x.categories) || [] });
+    });
+  });
+}
+function writeLocalForSync(links, categories) {
+  return new Promise(function (r) {
+    chrome.storage.local.set({ savedLinks: links, categories: categories }, function () { r(); });
+  });
 }

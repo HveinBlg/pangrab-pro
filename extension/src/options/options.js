@@ -15,6 +15,30 @@
   var filterState = { provider: "", category: "", sort: "savedAt_desc" };
   var batchCategoryValue = "";
 
+  var PRO = self.PanGrabPro;
+  // 会员判断（无公共层时默认放行，避免异常导致不可用）
+  function isPro() { return PRO ? PRO.isProNow() : Promise.resolve(true); }
+  // 打开「账号 / 云同步」面板（pro.js 注入的按钮）
+  function openProPanel() { var b = document.getElementById("proAccountBtn"); if (b) b.click(); }
+  // 提示需要 Pro，点「去开通」打开账号面板
+  function requirePro(title, message) {
+    showConfirm(message, { title: title || "Pro 会员功能", okText: "去开通" }).then(function (ok) {
+      if (ok) openProPanel();
+    });
+  }
+  // 是否允许新建分类（免费版上限）。返回 Promise<bool>
+  function ensureCanAddCategory() {
+    return isPro().then(function (pro) {
+      if (pro) return true;
+      var max = PRO.LIMITS.FREE_MAX_CATEGORIES;
+      if (allCategories().length >= max) {
+        requirePro("已达分类上限", "免费版最多创建 " + max + " 个分类（已达上限）。开通 Pro 可创建无限分类。");
+        return false;
+      }
+      return true;
+    });
+  }
+
   var els = {
     grid: document.getElementById("grid"),
     stats: document.getElementById("stats"),
@@ -201,11 +225,14 @@
 
     if (role === "batch") {
       if (val === "__new__") {
-        showPrompt("新建分类", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
-          name = (name || "").trim();
-          if (!name) return;
-          addCategory(name); batchCategoryValue = name;
-          saveCategories().then(function () { updateBatchBar(); });
+        ensureCanAddCategory().then(function (allow) {
+          if (!allow) { updateBatchBar(); return; }
+          showPrompt("新建分类", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
+            name = (name || "").trim();
+            if (!name) return;
+            addCategory(name); batchCategoryValue = name;
+            saveCategories().then(function () { updateBatchBar(); });
+          });
         });
         return;
       }
@@ -217,11 +244,14 @@
       var l = findByKey(key);
       if (!l) return;
       if (val === "__new__") {
-        showPrompt("输入新分类名称", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
-          name = (name || "").trim();
-          if (!name) { render(); return; }
-          addCategory(name); l.category = name;
-          saveCategories().then(function () { persist().then(function () { refreshFilters(); render(); toast("已归类到「" + name + "」"); }); });
+        ensureCanAddCategory().then(function (allow) {
+          if (!allow) { render(); return; }
+          showPrompt("输入新分类名称", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
+            name = (name || "").trim();
+            if (!name) { render(); return; }
+            addCategory(name); l.category = name;
+            saveCategories().then(function () { persist().then(function () { refreshFilters(); render(); toast("已归类到「" + name + "」"); }); });
+          });
         });
         return;
       }
@@ -238,6 +268,8 @@
     customCategories = await loadCategories();
     refreshFilters();
     render();
+    // 刷新会员状态缓存，确保导出/分类/检测等门控反映真实会员身份
+    if (self.PanGrabPro) self.PanGrabPro.refreshFromServer();
   }
   async function persist() { await sendToBg({ type: "SET_SAVED", links: all }); }
 
@@ -474,25 +506,39 @@
   document.getElementById("editSave").addEventListener("click", function () {
     var l = findByKey(editingKey);
     if (!l) { closeEdit(); return; }
-    l.title = els.editTitle.value.trim();
-    l.category = els.editCategory.value.trim() || "未分类";
-    l.tags = els.editTags.value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
-    l.code = els.editCode.value.trim();
-    l.note = els.editNote.value.trim();
-    addCategory(l.category);
-    saveCategories().then(function () {
-      persist().then(function () { closeEdit(); refreshFilters(); render(); toast("已保存"); });
-    });
+    var newCat = els.editCategory.value.trim() || "未分类";
+    var isNewCat = newCat !== "未分类" && allCategories().indexOf(newCat) === -1;
+
+    var proceed = function () {
+      l.title = els.editTitle.value.trim();
+      l.category = els.editCategory.value.trim() || "未分类";
+      l.tags = els.editTags.value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      l.code = els.editCode.value.trim();
+      l.note = els.editNote.value.trim();
+      addCategory(l.category);
+      saveCategories().then(function () {
+        persist().then(function () { closeEdit(); refreshFilters(); render(); toast("已保存"); });
+      });
+    };
+
+    if (isNewCat) {
+      ensureCanAddCategory().then(function (allow) { if (allow) proceed(); /* 不允许则停留在编辑框 */ });
+    } else {
+      proceed();
+    }
   });
 
   document.getElementById("newCategory").addEventListener("click", function () {
-    showPrompt("新建分类", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
-      name = (name || "").trim();
-      if (!name) return;
-      if (name === "未分类") { toast("「未分类」是默认分类，无需创建"); return; }
-      if (customCategories.indexOf(name) !== -1) { toast("分类「" + name + "」已存在"); return; }
-      addCategory(name);
-      saveCategories().then(function () { refreshFilters(); render(); toast("已新建分类「" + name + "」，可在卡片上选用"); });
+    ensureCanAddCategory().then(function (allow) {
+      if (!allow) return;
+      showPrompt("新建分类", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
+        name = (name || "").trim();
+        if (!name) return;
+        if (name === "未分类") { toast("「未分类」是默认分类，无需创建"); return; }
+        if (customCategories.indexOf(name) !== -1) { toast("分类「" + name + "」已存在"); return; }
+        addCategory(name);
+        saveCategories().then(function () { refreshFilters(); render(); toast("已新建分类「" + name + "」，可在卡片上选用"); });
+      });
     });
   });
 
@@ -507,28 +553,53 @@
     URL.revokeObjectURL(url);
   }
 
-  document.getElementById("exportJson").addEventListener("click", function () {
-    if (all.length === 0) { toast("没有可导出的数据"); return; }
-    download("netdisk-links-" + Date.now() + ".json", JSON.stringify(all, null, 2), "application/json");
-    toast("已导出 JSON");
-  });
-
-  document.getElementById("exportCsv").addEventListener("click", function () {
-    if (all.length === 0) { toast("没有可导出的数据"); return; }
+  // 导出：Pro 导出全部；免费版仅导出当前筛选可见的
+  function buildCsv(rows) {
     var header = ["网盘", "标题", "链接", "提取码", "分类", "标签", "备注", "来源页", "收藏时间"];
     var esc = function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; };
     var lines = [header.map(esc).join(",")];
-    all.forEach(function (l) {
+    rows.forEach(function (l) {
       lines.push([
         l.providerName, l.title, l.url, l.code, l.category || "未分类",
         (l.tags || []).join(" "), l.note, l.sourceUrl, fmtDate(l.savedAt)
       ].map(esc).join(","));
     });
-    download("netdisk-links-" + Date.now() + ".csv", "\ufeff" + lines.join("\r\n"), "text/csv");
-    toast("已导出 CSV");
-  });
+    return "\ufeff" + lines.join("\r\n");
+  }
+  function buildTxt(rows) {
+    return rows.map(function (l) {
+      return "【" + l.providerName + "】" + (l.title || "(未命名)") + "\n" +
+        l.url + (l.code ? "  提取码: " + l.code : "") +
+        (l.category && l.category !== "未分类" ? "\n分类: " + l.category : "");
+    }).join("\n\n");
+  }
+  function doExport(format) {
+    if (all.length === 0) { toast("没有可导出的数据"); return; }
+    isPro().then(function (pro) {
+      var rows = pro ? all.slice() : currentRows.slice();
+      if (rows.length === 0) { toast("当前筛选下没有可导出的链接"); return; }
+      var ts = Date.now();
+      if (format === "json") download("netdisk-links-" + ts + ".json", JSON.stringify(rows, null, 2), "application/json");
+      else if (format === "csv") download("netdisk-links-" + ts + ".csv", buildCsv(rows), "text/csv");
+      else download("netdisk-links-" + ts + ".txt", buildTxt(rows), "text/plain");
+      if (!pro && rows.length < all.length) {
+        toast("免费版仅导出当前 " + rows.length + " 条；开通 Pro 一键导出全部 " + all.length + " 条");
+      } else {
+        toast("已导出 " + rows.length + " 条");
+      }
+    });
+  }
+  document.getElementById("exportJson").addEventListener("click", function () { doExport("json"); });
+  document.getElementById("exportCsv").addEventListener("click", function () { doExport("csv"); });
+  document.getElementById("exportTxt").addEventListener("click", function () { doExport("txt"); });
 
-  document.getElementById("importBtn").addEventListener("click", function () { document.getElementById("importFile").click(); });
+  // 导入：Pro 会员功能（备份恢复 / 换设备迁移）
+  document.getElementById("importBtn").addEventListener("click", function () {
+    isPro().then(function (pro) {
+      if (!pro) { requirePro("导入是 Pro 功能", "批量导入备份是 Pro 会员功能，可用于换设备迁移、恢复备份。开通后即可使用。"); return; }
+      document.getElementById("importFile").click();
+    });
+  });
 
   document.getElementById("importFile").addEventListener("change", function (e) {
     var file = e.target.files[0];
@@ -572,18 +643,31 @@
     });
   });
 
-  // 检测失效：逐个联网访问链接，标记 有效 / 失效 / 无法确定
+  // 检测失效：逐个联网访问链接，标记 有效 / 失效 / 无法确定（免费版每天限 N 次）
   var checkingLive = false;
-  document.getElementById("checkLive").addEventListener("click", function () {
+  document.getElementById("checkLive").addEventListener("click", async function () {
     if (checkingLive) return;
     if (all.length === 0) { toast("没有数据"); return; }
+
+    var pro = await isPro();
+    if (!pro) {
+      var u = await PRO.getUsage("check");
+      var limit = PRO.LIMITS.FREE_CHECK_PER_DAY;
+      if (u.count >= limit) {
+        requirePro("已达今日检测上限", "免费版每天最多检测失效 " + limit + " 次（今天已用完）。开通 Pro 可无限次批量检测。");
+        return;
+      }
+    }
+
     var targets = currentRows.length ? currentRows.slice() : all.slice();
     showConfirm(
       "将逐个联网访问当前 " + targets.length + " 条链接检测是否失效。\n" +
-      "注意：天翼/百度/夸克等网盘失效页面是动态加载的，可能无法识别会归为「无法确定」；检测较慢，请耐心等待。是否继续？",
+      "注意：天翼/百度/夸克等网盘失效页面是动态加载的，可能无法识别会归为「无法确定」；检测较慢，请耐心等待。是否继续？" +
+      (pro ? "" : "\n（免费版今日剩余检测次数：" + (PRO.LIMITS.FREE_CHECK_PER_DAY - (await PRO.getUsage("check")).count) + "）"),
       { okText: "开始检测" }
     ).then(function (ok) {
       if (!ok) return;
+      if (!pro && PRO) PRO.bumpUsage("check");
       runLivenessCheck(targets);
     });
   });

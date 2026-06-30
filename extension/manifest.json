@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "PanGrab Pro 网盘抓手",
-  "version": "1.0.0",
-  "description": "PanGrab 会员版：网盘链接自动识别收藏 + 多端云同步。",
-  "permissions": ["storage", "activeTab", "scripting", "contextMenus", "notifications"],
+  "version": "1.1.0",
+  "description": "PanGrab 会员版：网盘链接自动识别收藏 + 多端云同步 + 导出备份。",
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus", "notifications", "alarms"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background.js"

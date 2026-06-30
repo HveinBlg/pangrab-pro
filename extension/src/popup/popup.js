@@ -289,9 +289,18 @@
     var toSave = getCheckedLinks();
     if (toSave.length === 0) return;
     var result = await sendToBg({ type: "SAVE_LINKS", links: toSave });
-    if (result) {
-      toSave.forEach(function (l) { savedKeys[l.key] = true; delete selected[l.key]; });
-      render();
+    if (!result) return;
+    // 重新同步已收藏集合（免费上限可能导致部分未保存）
+    var savedResp = await sendToBg({ type: "GET_SAVED" });
+    savedKeys = {};
+    if (savedResp && savedResp.links) savedResp.links.forEach(function (l) { savedKeys[l.key] = true; });
+    Object.keys(selected).forEach(function (k) { if (savedKeys[k]) delete selected[k]; });
+    render();
+    if (result.limitReached && result.added === 0) {
+      toast("已达免费上限 " + result.max + " 条，开通 Pro 解锁无限收藏");
+    } else if (result.limitReached) {
+      toast("已收藏 " + result.added + " 条；其余超出免费上限 " + result.max + " 条");
+    } else {
       toast("已收藏 " + result.added + " 条" + (result.skipped ? "，跳过 " + result.skipped + " 条" : ""));
     }
   });
