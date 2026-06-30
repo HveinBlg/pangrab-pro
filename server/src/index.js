@@ -11,6 +11,7 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const QRCode = require("qrcode");
 const db = require("./db");
 const alipay = require("./alipay");
 const lemon = require("./lemonsqueezy");
@@ -260,14 +261,18 @@ app.post("/api/order/create", auth, async (req, res) => {
       db.prepare(`INSERT INTO orders(out_trade_no, user_id, plan, days, amount, status, provider, currency, created_at)
                   VALUES(?,?,?,?,?,'pending','alipay','CNY',?)`)
         .run(outTradeNo, req.user.id, plan, p.days, p.amount, now());
-      const payUrl = alipay.pagePayUrl({
+      // 当面付：生成二维码内容，前端渲染成二维码供扫码支付
+      const qrContent = await alipay.precreateQr({
         outTradeNo: outTradeNo,
         amount: p.amount,
         subject: p.subject,
-        notifyUrl: PUBLIC_BASE_URL + "/api/alipay/notify",
-        returnUrl: PUBLIC_BASE_URL + "/api/alipay/return"
+        notifyUrl: PUBLIC_BASE_URL + "/api/alipay/notify"
       });
-      return res.json({ ok: true, out_trade_no: outTradeNo, provider: provider, payUrl: payUrl });
+      const qrDataUrl = await QRCode.toDataURL(qrContent, { margin: 1, width: 280 });
+      return res.json({
+        ok: true, out_trade_no: outTradeNo, provider: provider,
+        mode: "qr", qrDataUrl: qrDataUrl, amount: p.amount, subject: p.subject
+      });
     }
 
     if (provider === "lemonsqueezy") {
@@ -290,13 +295,27 @@ app.post("/api/order/create", auth, async (req, res) => {
   }
 });
 
-// 查询订单状态（前端轮询用）
-app.get("/api/order/status", auth, (req, res) => {
+// 查询订单状态（前端轮询用）。对支付宝待支付订单主动查单，防止 notify 未到达
+app.get("/api/order/status", auth, async (req, res) => {
   const ono = (req.query.out_trade_no || "").trim();
-  const row = db.prepare("SELECT out_trade_no, status, plan, amount, provider, currency, paid_at FROM orders WHERE out_trade_no=? AND user_id=?")
-    .get(ono, req.user.id);
+  const row = db.prepare("SELECT * FROM orders WHERE out_trade_no=? AND user_id=?").get(ono, req.user.id);
   if (!row) return res.status(404).json({ error: "订单不存在" });
-  res.json({ ok: true, order: row });
+
+  // 兜底：支付宝订单仍 pending 时主动向支付宝查一次
+  if (row.status !== "paid" && row.provider === "alipay" && alipay.enabled()) {
+    const q = await alipay.queryTrade(ono);
+    if (q && (q.tradeStatus === "TRADE_SUCCESS" || q.tradeStatus === "TRADE_FINISHED")) {
+      creditOrder(ono, q.tradeNo || "");
+      row.status = "paid";
+    }
+  }
+  res.json({
+    ok: true,
+    order: {
+      out_trade_no: row.out_trade_no, status: row.status, plan: row.plan,
+      amount: row.amount, provider: row.provider, currency: row.currency, paid_at: row.paid_at
+    }
+  });
 });
 
 /* --------------------------- 支付宝回调 --------------------------- */
