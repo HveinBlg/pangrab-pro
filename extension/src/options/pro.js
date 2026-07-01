@@ -32,8 +32,8 @@
     ".pro-tab{padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px;background:#f3f5fa}",
     ".pro-tab.active{background:#3d7fff;color:#fff}",
     // 自动同步：滑动开关
-    ".pro-autosync{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:#1f2733;cursor:pointer;user-select:none}",
-    ".pro-autosync .pro-autosync-text{line-height:1.4}",
+    ".pro-autosync{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;font-size:13px;color:#1f2733;cursor:pointer;user-select:none}",
+    ".pro-autosync .pro-autosync-text{line-height:1.4;flex:1}",
     ".pg-switch{position:relative;display:inline-block;flex:0 0 auto;width:42px;height:24px}",
     ".pg-switch input{position:absolute;opacity:0;width:0;height:0;margin:0}",
     ".pg-switch .slider{position:absolute;inset:0;background:#cfd6e4;border-radius:999px;transition:background .22s ease}",
@@ -162,8 +162,8 @@
         '<button class="pro-btn ghost" id="proDownload">⬇ 从云端下载并合并</button>' +
       "</div>" +
       '<label class="pro-autosync">' +
-        '<span class="pg-switch"><input type="checkbox" id="proAutoSync"/><span class="slider"></span></span>' +
         '<span class="pro-autosync-text">自动同步（每 30 分钟与云端合并，多设备保持一致）</span>' +
+        '<span class="pg-switch"><input type="checkbox" id="proAutoSync"/><span class="slider"></span></span>' +
       "</label>" +
       '<div id="proLastSync" class="pro-lastsync" style="font-size:12px;color:#7a869a;margin-top:6px"></div>' +
       '<hr class="pro-hr"/>' +
