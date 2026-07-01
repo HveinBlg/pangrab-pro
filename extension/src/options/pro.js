@@ -33,6 +33,7 @@
     ".pro-tab.active{background:#3d7fff;color:#fff}",
     // 自动同步：滑动开关
     ".pro-autosync{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;font-size:13px;color:#1f2733;cursor:pointer;user-select:none}",
+    "#proModal .pro-autosync{flex-direction:row}",
     ".pro-autosync .pro-autosync-text{line-height:1.4;flex:1}",
     ".pg-switch{position:relative;display:inline-block;flex:0 0 auto;width:42px;height:24px}",
     ".pg-switch input{position:absolute;opacity:0;width:0;height:0;margin:0}",
