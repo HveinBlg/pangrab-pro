@@ -58,4 +58,24 @@ CREATE TABLE IF NOT EXISTS orders (
   }
 })();
 
+/* ---- 迁移：为 users 表补充登录来源(IP/地区/登录次数)相关列 ---- */
+(function migrateUsers() {
+  try {
+    const cols = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+    const add = [
+      ["last_login_at", "INTEGER"],
+      ["last_ip", "TEXT"],
+      ["last_region", "TEXT"],
+      ["login_count", "INTEGER DEFAULT 0"],
+      ["reg_ip", "TEXT"],
+      ["reg_region", "TEXT"]
+    ];
+    add.forEach(([name, type]) => {
+      if (!cols.includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${type}`);
+    });
+  } catch (e) {
+    console.error("users 表迁移失败:", e.message);
+  }
+})();
+
 module.exports = db;

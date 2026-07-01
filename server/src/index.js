@@ -15,6 +15,9 @@ const QRCode = require("qrcode");
 const db = require("./db");
 const alipay = require("./alipay");
 const lemon = require("./lemonsqueezy");
+// 离线 IP 地理定位（可选依赖；未安装时地区显示为空，不影响其它功能）
+let geoip = null;
+try { geoip = require("geoip-lite"); } catch (e) { console.warn("geoip-lite 未安装，登录地区将为空。可执行 npm install 安装。"); }
 
 const PORT = process.env.PORT || 8787;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
@@ -30,6 +33,8 @@ const PLANS = {
 };
 
 const app = express();
+// 部署在反向代理(Caddy/Nginx/Lucky)后面时，据此从 X-Forwarded-For 取真实客户端 IP
+app.set("trust proxy", true);
 // 保留原始请求体，供 Lemon Squeezy webhook 做 HMAC 验签
 app.use(express.json({ limit: "5mb", verify: function (req, _res, buf) { req.rawBody = buf; } }));
 app.use(express.urlencoded({ extended: false })); // 支付宝异步通知是 form 表单
@@ -66,6 +71,32 @@ function requirePro(req, res, next) {
 
 function publicUser(u) {
   return { id: u.id, email: u.email, pro_until: u.pro_until || 0, is_pro: isPro(u) };
+}
+
+/* --------------------- 客户端 IP / 地区（登录来源记录）--------------------- */
+// 取真实客户端 IP（trust proxy 已开启，req.ip 会解析 X-Forwarded-For）
+function clientIp(req) {
+  let ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "";
+  return ip.replace(/^::ffff:/, ""); // 去掉 IPv4-mapped IPv6 前缀
+}
+// 由 IP 反查地区："国家代码 · 城市"，内网/无法解析时给出兜底
+function regionFromIp(ip) {
+  if (!ip) return "";
+  if (/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|fc00:|fe80:)/.test(ip)) return "本地/内网";
+  if (geoip) {
+    try {
+      const g = geoip.lookup(ip);
+      if (g) return (g.country || "?") + (g.city ? " · " + g.city : "");
+    } catch (e) { /* ignore */ }
+  }
+  return "";
+}
+// 记录一次登录来源
+function recordLogin(userId, req) {
+  const ip = clientIp(req);
+  const region = regionFromIp(ip);
+  db.prepare("UPDATE users SET last_login_at=?, last_ip=?, last_region=?, login_count=COALESCE(login_count,0)+1 WHERE id=?")
+    .run(now(), ip, region, userId);
 }
 
 /**
@@ -116,6 +147,9 @@ app.post("/api/register", (req, res) => {
   const hash = bcrypt.hashSync(password, 10);
   const info = db.prepare("INSERT INTO users(email, pass_hash, created_at) VALUES(?,?,?)")
     .run(email.toLowerCase(), hash, now());
+  const ip = clientIp(req), region = regionFromIp(ip);
+  db.prepare("UPDATE users SET reg_ip=?, reg_region=?, last_login_at=?, last_ip=?, last_region=?, login_count=1 WHERE id=?")
+    .run(ip, region, now(), ip, region, info.lastInsertRowid);
   const user = db.prepare("SELECT * FROM users WHERE id=?").get(info.lastInsertRowid);
   res.json({ token: signToken(user), user: publicUser(user) });
 });
@@ -125,6 +159,7 @@ app.post("/api/login", (req, res) => {
   const user = db.prepare("SELECT * FROM users WHERE email=?").get((email || "").toLowerCase());
   if (!user || !bcrypt.compareSync(password || "", user.pass_hash))
     return res.status(401).json({ error: "邮箱或密码错误" });
+  recordLogin(user.id, req);
   res.json({ token: signToken(user), user: publicUser(user) });
 });
 
@@ -225,6 +260,35 @@ app.get("/api/admin/stats", (req, res) => {
     codes_unused: codes.unused || 0,
     codes_used: codes.total - (codes.unused || 0)
   });
+});
+
+/* --------------------------- 用户列表（含登录来源） --------------------------- */
+app.get("/api/admin/users", (req, res) => {
+  if ((req.headers["x-admin-key"] || "") !== ADMIN_KEY)
+    return res.status(401).json({ error: "管理员密钥错误" });
+  const filter = (req.query.filter || "all").toLowerCase(); // all | pro
+  const q = (req.query.q || "").trim().toLowerCase();
+  const nowTs = now();
+  const cols = "id,email,pro_until,created_at,last_login_at,last_ip,last_region,login_count,reg_ip,reg_region";
+  const rows = filter === "pro"
+    ? db.prepare("SELECT " + cols + " FROM users WHERE pro_until > ? ORDER BY COALESCE(last_login_at,created_at) DESC").all(nowTs)
+    : db.prepare("SELECT " + cols + " FROM users ORDER BY COALESCE(last_login_at,created_at) DESC").all();
+  const list = rows
+    .filter((u) => !q || (u.email || "").toLowerCase().indexOf(q) !== -1 || (u.last_ip || "").indexOf(q) !== -1)
+    .map((u) => ({
+      id: u.id,
+      email: u.email,
+      is_pro: (u.pro_until || 0) > nowTs,
+      pro_until: u.pro_until || 0,
+      created_at: u.created_at || 0,
+      last_login_at: u.last_login_at || 0,
+      last_ip: u.last_ip || "",
+      last_region: u.last_region || "",
+      login_count: u.login_count || 0,
+      reg_ip: u.reg_ip || "",
+      reg_region: u.reg_region || ""
+    }));
+  res.json({ count: list.length, users: list });
 });
 
 /* --------------------------- 支付：渠道 & 下单 --------------------------- */

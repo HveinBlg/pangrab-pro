@@ -5,76 +5,139 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>PanGrab Pro 管理后台</title>
 <style>
+  :root { --pri:#3d7fff; --bg:#f4f6fb; --ink:#1f2733; --mut:#7a869a; --line:#e6eaf2; --ok:#15a05b; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f4f6fb; color: #1f2733; padding: 24px; }
-  .wrap { max-width: 860px; margin: 0 auto; }
-  h1 { font-size: 20px; margin-bottom: 16px; }
-  .card { background: #fff; border: 1px solid #e6eaf2; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--ink); }
+  .topbar { background: linear-gradient(120deg,#2f6bff,#5b8cff); color: #fff; padding: 18px 24px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 12px rgba(40,80,180,.18); }
+  .topbar h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+  .topbar .dot { width: 9px; height: 9px; border-radius: 50%; background: #5be0a0; box-shadow: 0 0 0 3px rgba(91,224,160,.3); }
+  .topbar .spacer { flex: 1; }
+  .topbar input { padding: 8px 12px; border: none; border-radius: 9px; font-size: 13px; min-width: 220px; background: rgba(255,255,255,.92); }
+  .topbar button { padding: 8px 16px; border: none; border-radius: 9px; background: #0b3fd0; color: #fff; font-size: 13px; cursor: pointer; font-weight: 600; }
+  .topbar button:hover { background: #0733ad; }
+  .wrap { max-width: 1080px; margin: 22px auto; padding: 0 20px; }
+  .msg { font-size: 13px; color: #cf1322; min-height: 18px; margin: 4px 2px 12px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 14px; margin-bottom: 22px; }
+  .stat { border-radius: 14px; padding: 16px 18px; color: #fff; box-shadow: 0 6px 18px rgba(40,80,180,.12); }
+  .stat b { font-size: 26px; font-weight: 800; display: block; line-height: 1.2; }
+  .stat span { font-size: 12px; opacity: .92; }
+  .stat.c1 { background: linear-gradient(135deg,#3d7fff,#6aa0ff); }
+  .stat.c2 { background: linear-gradient(135deg,#e9b949,#c8860d); }
+  .stat.c3 { background: linear-gradient(135deg,#15a05b,#3ecb86); }
+  .stat.c4 { background: linear-gradient(135deg,#7a869a,#9aa6b8); }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tab { padding: 9px 18px; border-radius: 10px 10px 0 0; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--mut); background: transparent; }
+  .tab.active { color: var(--pri); background: #fff; box-shadow: 0 -2px 0 var(--pri) inset; }
+
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .card h3 { font-size: 15px; margin-bottom: 12px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  input, button { font-size: 14px; font-family: inherit; }
-  input { padding: 8px 10px; border: 1px solid #e6eaf2; border-radius: 8px; }
-  button { padding: 8px 16px; border: none; border-radius: 8px; background: #3d7fff; color: #fff; cursor: pointer; }
-  button.ghost { background: #f3f5fa; color: #1f2733; border: 1px solid #e6eaf2; }
-  .stats { display: flex; gap: 12px; flex-wrap: wrap; }
-  .stat { background: #eef2fb; border-radius: 10px; padding: 12px 16px; min-width: 110px; }
-  .stat b { font-size: 22px; display: block; }
-  .stat span { font-size: 12px; color: #7a869a; }
-  label { font-size: 13px; color: #7a869a; }
-  textarea { width: 100%; height: 160px; margin-top: 10px; border: 1px solid #e6eaf2; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 13px; }
-  .msg { font-size: 13px; color: #cf1322; margin-top: 8px; min-height: 16px; }
-  .hint { font-size: 12px; color: #7a869a; margin-top: 6px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef0f4; }
-  .pill { font-size: 11px; padding: 1px 7px; border-radius: 999px; color: #fff; }
-  .pill.unused { background: #15a05b; } .pill.used { background: #7a869a; }
+  label { font-size: 13px; color: var(--mut); }
+  input, button, select { font-size: 14px; font-family: inherit; }
+  .card input, .card select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; }
+  .card button { padding: 8px 16px; border: none; border-radius: 8px; background: var(--pri); color: #fff; cursor: pointer; }
+  .card button.ghost { background: #f3f5fa; color: var(--ink); border: 1px solid var(--line); }
+  .card button.ghost.on { background: #e8f0ff; color: var(--pri); border-color: #b9cdfb; }
+  .hint { font-size: 12px; color: var(--mut); margin-top: 6px; }
+  textarea { width: 100%; height: 150px; margin-top: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 13px; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #eef0f4; }
+  th { color: var(--mut); font-weight: 600; font-size: 12px; background: #fafbfe; position: sticky; top: 0; }
+  tbody tr:hover { background: #f7f9ff; }
+  .email { font-weight: 600; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; color: #46506180; }
+  .mono.ip { color: #33415c; }
+  .pill { font-size: 11px; padding: 2px 9px; border-radius: 999px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; }
+  .pill.pro { background: linear-gradient(135deg,#fde7a8,#e9b949 60%,#c8860d); color: #5a3d00; }
+  .pill.free { background: #eef1f6; color: #7a869a; }
+  .pill.unused { background: #e6f7ee; color: #15a05b; }
+  .pill.used { background: #eef1f6; color: #7a869a; }
+  .region { display: inline-flex; align-items: center; gap: 4px; }
+  .empty { text-align: center; color: var(--mut); padding: 30px; font-size: 13px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>PanGrab Pro 管理后台</h1>
+  <div class="topbar">
+    <span class="dot"></span>
+    <h1>PanGrab Pro 管理后台</h1>
+    <span class="spacer"></span>
+    <input id="key" type="password" placeholder="输入 ADMIN_KEY" />
+    <button onclick="saveKey()">加载</button>
+  </div>
 
-  <div class="card">
-    <div class="row">
-      <label>管理员密钥(ADMIN_KEY)</label>
-      <input id="key" type="password" placeholder="输入 ADMIN_KEY" style="flex:1;min-width:240px" />
-      <button onclick="saveKey()">保存并加载</button>
-    </div>
-    <div class="hint">密钥仅保存在本浏览器(localStorage)，用于调用管理接口。</div>
+  <div class="wrap">
     <div class="msg" id="msg"></div>
-  </div>
 
-  <div class="card">
-    <div class="stats" id="stats"><span class="hint">输入密钥后显示统计…</span></div>
-  </div>
-
-  <div class="card">
-    <h3 style="font-size:15px;margin-bottom:10px">生成兑换码</h3>
-    <div class="row">
-      <label>数量</label><input id="count" type="number" value="10" style="width:90px" />
-      <label>天数</label><input id="days" type="number" value="30" style="width:90px" />
-      <button onclick="gen()">生成</button>
-      <span class="hint">30=月卡 / 90=季卡 / 365=年卡</span>
+    <div class="stats" id="stats">
+      <div class="stat c1"><b>-</b><span>注册用户</span></div>
+      <div class="stat c2"><b>-</b><span>付费会员</span></div>
+      <div class="stat c3"><b>-</b><span>剩余库存</span></div>
+      <div class="stat c4"><b>-</b><span>已用兑换码</span></div>
     </div>
-    <textarea id="genOut" placeholder="生成的兑换码会显示在这里，复制保存好" readonly></textarea>
-  </div>
 
-  <div class="card">
-    <div class="row">
-      <h3 style="font-size:15px;flex:1">兑换码库存</h3>
-      <button class="ghost" onclick="list('unused')">只看未使用</button>
-      <button class="ghost" onclick="list('all')">全部</button>
+    <div class="tabs">
+      <div class="tab active" data-tab="users" onclick="switchTab('users')">👥 用户</div>
+      <div class="tab" data-tab="codes" onclick="switchTab('codes')">🎟️ 兑换码</div>
     </div>
-    <div id="codes"></div>
+
+    <!-- 用户 -->
+    <div id="tab-users">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <button class="ghost on" id="fAll" onclick="loadUsers('all')">全部用户</button>
+          <button class="ghost" id="fPro" onclick="loadUsers('pro')">仅付费会员</button>
+          <input id="search" placeholder="搜索邮箱 / IP…" style="flex:1;min-width:180px" oninput="renderUsers()" />
+          <span class="hint" id="userCount"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>邮箱</th><th>会员</th><th>到期</th><th>地区</th><th>IP</th>
+              <th>最近登录</th><th>登录次数</th><th>注册时间</th>
+            </tr></thead>
+            <tbody id="userRows"><tr><td colspan="8" class="empty">输入 ADMIN_KEY 后加载…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 兑换码 -->
+    <div id="tab-codes" style="display:none">
+      <div class="card">
+        <h3>生成兑换码</h3>
+        <div class="row">
+          <label>数量</label><input id="count" type="number" value="10" style="width:90px" />
+          <label>天数</label><input id="days" type="number" value="30" style="width:90px" />
+          <button onclick="gen()">生成</button>
+          <span class="hint">30=月卡 / 90=季卡 / 365=年卡</span>
+        </div>
+        <textarea id="genOut" placeholder="生成的兑换码会显示在这里，复制保存好" readonly></textarea>
+      </div>
+      <div class="card">
+        <div class="row" style="margin-bottom:6px">
+          <h3 style="flex:1;margin:0">兑换码库存</h3>
+          <button class="ghost on" id="cUnused" onclick="listCodes('unused')">只看未使用</button>
+          <button class="ghost" id="cAll" onclick="listCodes('all')">全部</button>
+        </div>
+        <div class="table-wrap" id="codes"></div>
+      </div>
+    </div>
   </div>
-</div>
 
 <script>
   var API = location.origin;
+  var usersCache = [];
+  var userFilter = "all";
   function key() { return localStorage.getItem("pg_admin_key") || ""; }
   function setMsg(t) { document.getElementById("msg").textContent = t || ""; }
+
   function saveKey() {
     localStorage.setItem("pg_admin_key", document.getElementById("key").value.trim());
-    setMsg(""); loadStats(); list("unused");
+    setMsg(""); loadAll();
   }
   async function api(path, opts) {
     opts = opts || {};
@@ -83,45 +146,105 @@
       headers: { "x-admin-key": key(), "Content-Type": "application/json" },
       body: opts.body ? JSON.stringify(opts.body) : undefined
     });
-    var data = await res.json().catch(function(){return{};});
+    var data = await res.json().catch(function () { return {}; });
     if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
     return data;
   }
+
+  function switchTab(name) {
+    document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t.getAttribute("data-tab") === name); });
+    document.getElementById("tab-users").style.display = name === "users" ? "" : "none";
+    document.getElementById("tab-codes").style.display = name === "codes" ? "" : "none";
+  }
+
+  function fmt(ts) { return ts ? new Date(ts).toLocaleString() : "-"; }
+  function fmtDate(ts) { return ts ? new Date(ts).toLocaleDateString() : "-"; }
+  function esc(s) { return (s == null ? "" : String(s)).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  // 由国家代码取国旗 emoji
+  function flag(region) {
+    var m = (region || "").match(/^([A-Za-z]{2})\b/);
+    if (!m) return "";
+    var cc = m[1].toUpperCase();
+    if (cc === "本" ) return "";
+    return String.fromCodePoint.apply(null, cc.split("").map(function (ch) { return 0x1F1E6 + ch.charCodeAt(0) - 65; }));
+  }
+
   async function loadStats() {
+    var s = await api("/api/admin/stats");
+    document.getElementById("stats").innerHTML =
+      statCard("c1", s.users, "注册用户") + statCard("c2", s.pro_users, "付费会员") +
+      statCard("c3", s.codes_unused, "剩余库存") + statCard("c4", s.codes_used, "已用兑换码");
+  }
+  function statCard(c, n, label) { return '<div class="stat ' + c + '"><b>' + (n || 0) + '</b><span>' + label + '</span></div>'; }
+
+  async function loadUsers(filter) {
+    userFilter = filter || userFilter;
+    document.getElementById("fAll").classList.toggle("on", userFilter === "all");
+    document.getElementById("fPro").classList.toggle("on", userFilter === "pro");
     try {
-      var s = await api("/api/admin/stats");
-      document.getElementById("stats").innerHTML =
-        stat(s.users, "注册用户") + stat(s.pro_users, "付费会员") +
-        stat(s.codes_unused, "剩余库存") + stat(s.codes_used, "已用码") + stat(s.codes_total, "总码数");
+      var r = await api("/api/admin/users?filter=" + userFilter);
+      usersCache = r.users || [];
+      renderUsers();
     } catch (e) { setMsg(e.message); }
   }
-  function stat(n, label) { return '<div class="stat"><b>' + (n||0) + '</b><span>' + label + '</span></div>'; }
+  function renderUsers() {
+    var q = (document.getElementById("search").value || "").trim().toLowerCase();
+    var rows = usersCache.filter(function (u) {
+      return !q || (u.email || "").toLowerCase().indexOf(q) !== -1 || (u.last_ip || "").indexOf(q) !== -1;
+    });
+    document.getElementById("userCount").textContent = "共 " + rows.length + " 位";
+    if (rows.length === 0) { document.getElementById("userRows").innerHTML = '<tr><td colspan="8" class="empty">暂无用户</td></tr>'; return; }
+    document.getElementById("userRows").innerHTML = rows.map(function (u) {
+      var badge = u.is_pro ? '<span class="pill pro">👑 会员</span>' : '<span class="pill free">免费</span>';
+      var region = u.last_region ? '<span class="region">' + flag(u.last_region) + " " + esc(u.last_region) + "</span>" : '<span class="mono">-</span>';
+      return "<tr>" +
+        '<td class="email">' + esc(u.email) + "</td>" +
+        "<td>" + badge + "</td>" +
+        "<td>" + (u.is_pro ? fmtDate(u.pro_until) : "-") + "</td>" +
+        "<td>" + region + "</td>" +
+        '<td class="mono ip">' + (esc(u.last_ip) || "-") + "</td>" +
+        "<td>" + fmt(u.last_login_at) + "</td>" +
+        "<td>" + (u.login_count || 0) + "</td>" +
+        "<td>" + fmt(u.created_at) + "</td>" +
+        "</tr>";
+    }).join("");
+  }
+
   async function gen() {
     try {
       var count = parseInt(document.getElementById("count").value) || 1;
       var days = parseInt(document.getElementById("days").value) || 30;
       var r = await api("/api/admin/codes", { method: "POST", body: { count: count, days: days } });
       document.getElementById("genOut").value = r.codes.join("\n");
-      loadStats(); list("unused");
+      loadStats(); listCodes("unused");
     } catch (e) { setMsg(e.message); }
   }
-  async function list(status) {
+  async function listCodes(status) {
+    document.getElementById("cUnused").classList.toggle("on", status === "unused");
+    document.getElementById("cAll").classList.toggle("on", status === "all");
     try {
       var r = await api("/api/admin/codes?status=" + status);
-      var html = '<table><tr><th>兑换码</th><th>天数</th><th>状态</th><th>使用时间</th></tr>';
+      var html = '<table><thead><tr><th>兑换码</th><th>天数</th><th>状态</th><th>使用时间</th></tr></thead><tbody>';
+      if (r.codes.length === 0) html += '<tr><td colspan="4" class="empty">暂无</td></tr>';
       r.codes.forEach(function (c) {
-        html += '<tr><td>' + c.code + '</td><td>' + c.days + '</td><td>' +
+        html += "<tr><td class='mono'>" + c.code + "</td><td>" + c.days + "</td><td>" +
           (c.used_by ? '<span class="pill used">已用</span>' : '<span class="pill unused">未用</span>') +
-          '</td><td>' + (c.used_at ? new Date(c.used_at).toLocaleString() : '-') + '</td></tr>';
+          "</td><td>" + (c.used_at ? new Date(c.used_at).toLocaleString() : "-") + "</td></tr>";
       });
-      html += '</table>';
-      document.getElementById("codes").innerHTML = "共 " + r.count + " 条" + html;
+      html += "</tbody></table>";
+      document.getElementById("codes").innerHTML = html;
     } catch (e) { setMsg(e.message); }
   }
-  // 初始化
+
+  function loadAll() {
+    if (!key()) return;
+    loadStats().catch(function (e) { setMsg(e.message); });
+    loadUsers("all");
+    listCodes("unused");
+  }
   (function () {
     document.getElementById("key").value = key();
-    if (key()) { loadStats(); list("unused"); }
+    loadAll();
   })();
 </script>
 </body>
