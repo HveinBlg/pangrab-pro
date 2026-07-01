@@ -35,9 +35,14 @@
     ".pro-btn{padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px}",
     ".pro-btn.primary{background:#3d7fff;color:#fff}",
     ".pro-btn.ghost{background:#f3f5fa;border:1px solid #e6eaf2;color:#1f2733}",
-    ".pro-status{font-size:13px;padding:10px;border-radius:8px;background:#f3f8ff;margin-bottom:12px;line-height:1.6}",
-    ".pro-badge{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;color:#fff}",
-    ".pro-badge.on{background:#15a05b}.pro-badge.off{background:#7a869a}",
+    ".pro-status{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;padding:12px;border-radius:10px;background:#f3f8ff;margin-bottom:12px;line-height:1.5}",
+    ".pro-status-info{min-width:0}",
+    ".pro-email{font-size:13px;color:#1f2733;font-weight:500;word-break:break-all}",
+    ".pro-expiry{font-size:12px;color:#7a869a;margin-top:3px}",
+    ".pro-badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px;color:#fff;letter-spacing:.3px;line-height:1.6;vertical-align:middle}",
+    ".pro-badge.on{background:linear-gradient(135deg,#fde7a8 0%,#e9b949 42%,#c8860d 100%);color:#5a3d00;box-shadow:0 1px 3px rgba(170,115,10,.4),inset 0 1px 0 rgba(255,255,255,.65);text-shadow:0 1px 0 rgba(255,255,255,.35)}",
+    ".pro-badge.on::before{content:\"\uD83D\uDC51\";font-size:10px;line-height:1;filter:drop-shadow(0 1px 1px rgba(120,80,0,.35))}",
+    ".pro-badge.off{background:#eef1f6;color:#7a869a}",
     ".pro-msg{font-size:12px;margin-top:8px;min-height:16px}",
     ".pro-msg.err{color:#cf1322}.pro-msg.ok{color:#15a05b}",
     ".pro-hr{border:none;border-top:1px solid #eef0f4;margin:14px 0}",
@@ -161,11 +166,15 @@
   function renderAccount() {
     var u = state.user || {};
     var buyLabel = isMainlandChina() ? t("pro_buy_alipay") : t("pro_buy_intl");
-    var proHtml = u.is_pro
-      ? '<span class="pro-badge on">' + t("pro_badge_on") + "</span> " + t("pro_expires", fmtDate(u.pro_until))
+    var badgeHtml = u.is_pro
+      ? '<span class="pro-badge on">' + t("pro_badge_on") + "</span>"
       : '<span class="pro-badge off">' + t("pro_badge_off") + "</span>";
+    var expiryHtml = u.is_pro ? '<div class="pro-expiry">' + t("pro_expires", fmtDate(u.pro_until)) + "</div>" : "";
     body.innerHTML =
-      '<div class="pro-status">' + (u.email || "") + "<br/>" + proHtml + "</div>" +
+      '<div class="pro-status">' +
+        '<div class="pro-status-info"><div class="pro-email">' + (u.email || "") + "</div>" + expiryHtml + "</div>" +
+        badgeHtml +
+      "</div>" +
       '<div class="pro-field"><label>' + t("pro_redeem_label") + "</label>" +
         '<div class="pro-row"><input id="proCode" placeholder="PG-XXXXXXXX" style="flex:1"/>' +
         '<button class="pro-btn primary" id="proRedeem">' + t("pro_redeem") + "</button></div></div>" +
