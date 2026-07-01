@@ -22,7 +22,7 @@
   function openProPanel() { var b = document.getElementById("proAccountBtn"); if (b) b.click(); }
   // 提示需要 Pro，点「去开通」打开账号面板
   function requirePro(title, message) {
-    showConfirm(message, { title: title || "Pro 会员功能", okText: "去开通" }).then(function (ok) {
+    showConfirm(message, { title: title || t("dlg_pro_feature"), okText: t("dlg_upgrade") }).then(function (ok) {
       if (ok) openProPanel();
     });
   }
@@ -32,7 +32,7 @@
       if (pro) return true;
       var max = PRO.LIMITS.FREE_MAX_CATEGORIES;
       if (allCategories().length >= max) {
-        requirePro("已达分类上限", "免费版最多创建 " + max + " 个分类（已达上限）。开通 Pro 可创建无限分类。");
+        requirePro(t("dlg_cat_limit_title"), t("dlg_cat_limit_msg", max));
         return false;
       }
       return true;
@@ -121,7 +121,7 @@
       dlgInput.hidden = false;
       dlgInput.placeholder = opts.placeholder || "";
       dlgInput.value = opts.value || "";
-      dlgOk.textContent = "确定"; dlgOk.className = "primary";
+      dlgOk.textContent = t("opt_ok"); dlgOk.className = "primary";
       dialogEl.hidden = false;
       setTimeout(function () { dlgInput.focus(); dlgInput.select(); }, 30);
     });
@@ -130,10 +130,10 @@
     opts = opts || {};
     return new Promise(function (resolve) {
       dlgResolve = resolve; dlgMode = "confirm";
-      dlgTitle.textContent = opts.title || "请确认";
+      dlgTitle.textContent = opts.title || t("dlg_confirm_title");
       dlgMessage.textContent = message; dlgMessage.hidden = false;
       dlgInput.hidden = true;
-      dlgOk.textContent = opts.okText || "确定";
+      dlgOk.textContent = opts.okText || t("opt_ok");
       dlgOk.className = opts.danger ? "primary danger-btn" : "primary";
       dialogEl.hidden = false;
       setTimeout(function () { dlgOk.focus(); }, 30);
@@ -167,36 +167,36 @@
     container.innerHTML = ddInner(value, options, placeholder);
   }
   function cardCatDD(current, key) {
-    var options = [{ value: "未分类", label: "未分类" }]
+    var options = [{ value: "未分类", label: t("cat_uncategorized") }]
       .concat(allCategories().map(function (c) { return { value: c, label: c }; }))
-      .concat([{ value: "__new__", label: "＋ 新建分类…" }]);
+      .concat([{ value: "__new__", label: t("cat_new") }]);
     return '<div class="dd dd-cat" data-role="cat" data-key="' + escapeHtml(key) + '" data-value="' + escapeHtml(current) + '" tabindex="0">' +
-      ddInner(current, options, "未分类") + "</div>";
+      ddInner(current, options, t("cat_uncategorized")) + "</div>";
   }
 
   function providerOptions() {
     var providers = {};
     all.forEach(function (l) { providers[l.providerId] = l.providerName; });
-    var opts = [{ value: "", label: "全部网盘" }];
+    var opts = [{ value: "", label: t("filter_all_providers") }];
     Object.keys(providers).forEach(function (id) { opts.push({ value: id, label: providers[id] }); });
     return opts;
   }
   function categoryFilterOptions() {
-    var opts = [{ value: "", label: "全部分类" }];
+    var opts = [{ value: "", label: t("filter_all_categories") }];
     allCategories().forEach(function (c) { opts.push({ value: c, label: c }); });
-    if (all.some(function (l) { return !l.category || l.category === "未分类"; })) opts.push({ value: "未分类", label: "未分类" });
+    if (all.some(function (l) { return !l.category || l.category === "未分类"; })) opts.push({ value: "未分类", label: t("cat_uncategorized") });
     return opts;
   }
   var SORT_OPTIONS = [
-    { value: "savedAt_desc", label: "最近收藏" },
-    { value: "savedAt_asc", label: "最早收藏" },
-    { value: "provider", label: "按网盘" },
-    { value: "category", label: "按分类" }
+    { value: "savedAt_desc", label: t("sort_recent") },
+    { value: "savedAt_asc", label: t("sort_oldest") },
+    { value: "provider", label: t("sort_provider") },
+    { value: "category", label: t("sort_category") }
   ];
   function batchOptions() {
-    return [{ value: "", label: "归类到…" }, { value: "未分类", label: "未分类" }]
+    return [{ value: "", label: t("cat_move_to") }, { value: "未分类", label: t("cat_uncategorized") }]
       .concat(allCategories().map(function (c) { return { value: c, label: c }; }))
-      .concat([{ value: "__new__", label: "＋ 新建分类…" }]);
+      .concat([{ value: "__new__", label: t("cat_new") }]);
   }
 
   // 全局委托：点击下拉框 / 选项 / 外部
@@ -227,7 +227,7 @@
       if (val === "__new__") {
         ensureCanAddCategory().then(function (allow) {
           if (!allow) { updateBatchBar(); return; }
-          showPrompt("新建分类", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
+          showPrompt(t("dlg_new_category"), { placeholder: t("dlg_new_category_ph") }).then(function (name) {
             name = (name || "").trim();
             if (!name) return;
             addCategory(name); batchCategoryValue = name;
@@ -246,17 +246,17 @@
       if (val === "__new__") {
         ensureCanAddCategory().then(function (allow) {
           if (!allow) { render(); return; }
-          showPrompt("输入新分类名称", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
+          showPrompt(t("dlg_enter_category"), { placeholder: t("dlg_new_category_ph") }).then(function (name) {
             name = (name || "").trim();
             if (!name) { render(); return; }
             addCategory(name); l.category = name;
-            saveCategories().then(function () { persist().then(function () { refreshFilters(); render(); toast("已归类到「" + name + "」"); }); });
+            saveCategories().then(function () { persist().then(function () { refreshFilters(); render(); toast(t("toast_moved_to", name)); }); });
           });
         });
         return;
       }
       l.category = val;
-      persist().then(function () { refreshFilters(); render(); toast(val === "未分类" ? "已移出分类" : "已归类到「" + val + "」"); });
+      persist().then(function () { refreshFilters(); render(); toast(val === "未分类" ? t("toast_removed_category") : t("toast_moved_to", val)); });
     }
   }
 
@@ -297,9 +297,9 @@
   }
 
   function refreshFilters() {
-    renderDD(ddProvider, filterState.provider, providerOptions(), "全部网盘");
-    renderDD(ddCategory, filterState.category, categoryFilterOptions(), "全部分类");
-    renderDD(ddSort, filterState.sort, SORT_OPTIONS, "排序");
+    renderDD(ddProvider, filterState.provider, providerOptions(), t("filter_all_providers"));
+    renderDD(ddCategory, filterState.category, categoryFilterOptions(), t("filter_all_categories"));
+    renderDD(ddSort, filterState.sort, SORT_OPTIONS, t("sort_placeholder"));
     els.categoryList.innerHTML = "";
     allCategories().forEach(function (c) {
       var d = document.createElement("option"); d.value = c; els.categoryList.appendChild(d);
@@ -314,7 +314,7 @@
       if (!byProvider[l.providerId]) byProvider[l.providerId] = { name: l.providerName, color: l.providerColor, n: 0 };
       byProvider[l.providerId].n++;
     });
-    var html = '<div class="stat-chip"><b>' + all.length + "</b> 条收藏</div>";
+    var html = '<div class="stat-chip">' + t("stats_total", "<b>" + all.length + "</b>") + "</div>";
     Object.keys(byProvider).forEach(function (id) {
       var p = byProvider[id];
       html += '<div class="stat-chip"><span class="stat-dot" style="background:' + p.color + '"></span>' + escapeHtml(p.name) + " <b>" + p.n + "</b></div>";
@@ -367,15 +367,15 @@
       }
       var titleHtml = dispTitle
         ? '<div class="item-title">' + escapeHtml(dispTitle) + "</div>"
-        : '<div class="item-title placeholder">（未命名资源）</div>';
-      var codeHtml = l.code ? '<span class="code-chip">提取码 ' + escapeHtml(l.code) + "</span>" : "";
+        : '<div class="item-title placeholder">' + t("item_untitled") + "</div>";
+      var codeHtml = l.code ? '<span class="code-chip">' + t("chip_code", escapeHtml(l.code)) + "</span>" : "";
       var isSus = l.suspect || D.isLikelyTruncated(l.url);
       var suspectHtml = isSus
-        ? '<span class="suspect-chip" title="该链接可能被页面截断、不完整。建议打开真实分享页后再收藏">⚠️ 可能不完整</span>'
+        ? '<span class="suspect-chip" title="' + escapeHtml(t("chip_suspect_title")) + '">' + t("chip_suspect") + "</span>"
         : "";
-      var liveHtml = l.liveness === "dead" ? '<span class="live-chip dead" title="' + escapeHtml(l.liveReason || "") + '">✗ 已失效</span>'
-        : l.liveness === "alive" ? '<span class="live-chip alive">✓ 有效</span>'
-        : l.liveness === "unknown" ? '<span class="live-chip unknown" title="' + escapeHtml(l.liveReason || "") + '">? 未确定</span>'
+      var liveHtml = l.liveness === "dead" ? '<span class="live-chip dead" title="' + escapeHtml(l.liveReason || "") + '">' + t("live_dead") + "</span>"
+        : l.liveness === "alive" ? '<span class="live-chip alive">' + t("live_alive") + "</span>"
+        : l.liveness === "unknown" ? '<span class="live-chip unknown" title="' + escapeHtml(l.liveReason || "") + '">' + t("live_unknown") + "</span>"
         : "";
 
       return '<div class="item' + (isSus ? " suspect" : "") + (l.liveness === "dead" ? " dead" : "") + '" data-key="' + escapeHtml(l.key) + '">' +
@@ -391,11 +391,11 @@
         '<div class="item-url"><a href="' + escapeHtml(l.url) + '" target="_blank" rel="noreferrer">' + escapeHtml(l.url) + "</a></div>" +
         (tags ? '<div class="tags">' + tags + "</div>" : "") +
         (l.note ? '<div class="note">' + escapeHtml(l.note) + "</div>" : "") +
-        '<div class="item-meta">收藏于 ' + fmtDate(l.savedAt) + "</div>" +
+        '<div class="item-meta">' + t("item_saved_at", fmtDate(l.savedAt)) + "</div>" +
         '<div class="item-actions">' +
-          '<button class="mini-btn act-copy">复制链接+提取码</button>' +
-          '<button class="mini-btn act-edit">编辑</button>' +
-          '<button class="mini-btn del act-del">删除</button>' +
+          '<button class="mini-btn act-copy">' + t("item_copy") + "</button>" +
+          '<button class="mini-btn act-edit">' + t("item_edit") + "</button>" +
+          '<button class="mini-btn del act-del">' + t("item_delete") + "</button>" +
         "</div>" +
       "</div>";
     }).join("");
@@ -411,10 +411,10 @@
   function updateBatchBar() {
     Object.keys(selectedKeys).forEach(function (k) { if (!findByKey(k)) delete selectedKeys[k]; });
     var n = selectedList().length;
-    els.batchCount.textContent = n > 0 ? "已选 " + n + " 条" : "未选择";
+    els.batchCount.textContent = n > 0 ? t("opt_batch_selected", n) : t("opt_batch_none");
     els.batchActions.hidden = n === 0;
     els.batchSelectAll.checked = currentRows.length > 0 && currentRows.every(function (l) { return selectedKeys[l.key]; });
-    renderDD(ddBatch, batchCategoryValue, batchOptions(), "归类到…");
+    renderDD(ddBatch, batchCategoryValue, batchOptions(), t("cat_move_to"));
   }
 
   function bindBatchEvents() {
@@ -427,26 +427,26 @@
 
     els.batchApply.addEventListener("click", function () {
       var sel = selectedList();
-      if (sel.length === 0) { toast("请先勾选链接"); return; }
-      if (!batchCategoryValue) { toast("请先选择要归类到的分类"); return; }
+      if (sel.length === 0) { toast(t("toast_select_first")); return; }
+      if (!batchCategoryValue) { toast(t("toast_choose_category")); return; }
       var category = batchCategoryValue;
       sel.forEach(function (l) { l.category = category; });
       saveCategories().then(function () {
         persist().then(function () {
           refreshFilters(); render();
-          toast("已把 " + sel.length + " 条归类到「" + category + "」");
+          toast(t("toast_moved_n", sel.length, category));
         });
       });
     });
 
     els.batchDelete.addEventListener("click", function () {
       var sel = selectedList();
-      if (sel.length === 0) { toast("请先勾选链接"); return; }
-      showConfirm("确定删除选中的 " + sel.length + " 条收藏吗？", { danger: true, okText: "删除" }).then(function (ok) {
+      if (sel.length === 0) { toast(t("toast_select_first")); return; }
+      showConfirm(t("confirm_delete_selected", sel.length), { danger: true, okText: t("btn_delete") }).then(function (ok) {
         if (!ok) return;
         all = all.filter(function (l) { return !selectedKeys[l.key]; });
         selectedKeys = {};
-        persist().then(function () { refreshFilters(); render(); toast("已删除"); });
+        persist().then(function () { refreshFilters(); render(); toast(t("toast_deleted")); });
       });
     });
   }
@@ -462,15 +462,15 @@
       card.querySelector(".act-copy").addEventListener("click", function () {
         var l = findByKey(key);
         if (!l) return;
-        var text = l.url + (l.code ? "  提取码: " + l.code : "");
-        navigator.clipboard.writeText(text).then(function () { toast("已复制到剪贴板"); });
+        var text = l.url + (l.code ? "  " + t("txt_code").trim() + " " + l.code : "");
+        navigator.clipboard.writeText(text).then(function () { toast(t("toast_copied")); });
       });
       card.querySelector(".act-edit").addEventListener("click", function () { openEdit(key); });
       card.querySelector(".act-del").addEventListener("click", function () {
-        showConfirm("确定删除这条收藏吗？", { danger: true, okText: "删除" }).then(function (ok) {
+        showConfirm(t("confirm_delete_one"), { danger: true, okText: t("btn_delete") }).then(function (ok) {
           if (!ok) return;
           all = all.filter(function (x) { return x.key !== key; });
-          persist().then(function () { refreshFilters(); render(); toast("已删除"); });
+          persist().then(function () { refreshFilters(); render(); toast(t("toast_deleted")); });
         });
       });
       var chk = card.querySelector(".item-check");
@@ -517,7 +517,7 @@
       l.note = els.editNote.value.trim();
       addCategory(l.category);
       saveCategories().then(function () {
-        persist().then(function () { closeEdit(); refreshFilters(); render(); toast("已保存"); });
+        persist().then(function () { closeEdit(); refreshFilters(); render(); toast(t("toast_saved")); });
       });
     };
 
@@ -531,13 +531,13 @@
   document.getElementById("newCategory").addEventListener("click", function () {
     ensureCanAddCategory().then(function (allow) {
       if (!allow) return;
-      showPrompt("新建分类", { placeholder: "如：电影 / 短剧 / 学习" }).then(function (name) {
+      showPrompt(t("dlg_new_category"), { placeholder: t("dlg_new_category_ph") }).then(function (name) {
         name = (name || "").trim();
         if (!name) return;
-        if (name === "未分类") { toast("「未分类」是默认分类，无需创建"); return; }
-        if (customCategories.indexOf(name) !== -1) { toast("分类「" + name + "」已存在"); return; }
+        if (name === "未分类") { toast(t("toast_uncategorized_default")); return; }
+        if (customCategories.indexOf(name) !== -1) { toast(t("toast_category_exists", name)); return; }
         addCategory(name);
-        saveCategories().then(function () { refreshFilters(); render(); toast("已新建分类「" + name + "」，可在卡片上选用"); });
+        saveCategories().then(function () { refreshFilters(); render(); toast(t("toast_category_created", name)); });
       });
     });
   });
@@ -555,7 +555,7 @@
 
   // 导出：Pro 导出全部；免费版仅导出当前筛选可见的
   function buildCsv(rows) {
-    var header = ["网盘", "标题", "链接", "提取码", "分类", "标签", "备注", "来源页", "收藏时间"];
+    var header = [t("csv_provider"), t("csv_title"), t("csv_url"), t("csv_code"), t("csv_category"), t("csv_tags"), t("csv_note"), t("csv_source"), t("csv_saved_at")];
     var esc = function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; };
     var lines = [header.map(esc).join(",")];
     rows.forEach(function (l) {
@@ -568,24 +568,24 @@
   }
   function buildTxt(rows) {
     return rows.map(function (l) {
-      return "【" + l.providerName + "】" + (l.title || "(未命名)") + "\n" +
-        l.url + (l.code ? "  提取码: " + l.code : "") +
-        (l.category && l.category !== "未分类" ? "\n分类: " + l.category : "");
+      return "【" + l.providerName + "】" + (l.title || t("txt_untitled")) + "\n" +
+        l.url + (l.code ? t("txt_code") + l.code : "") +
+        (l.category && l.category !== "未分类" ? "\n" + t("txt_category") + l.category : "");
     }).join("\n\n");
   }
   function doExport(format) {
-    if (all.length === 0) { toast("没有可导出的数据"); return; }
+    if (all.length === 0) { toast(t("toast_no_export")); return; }
     isPro().then(function (pro) {
       var rows = pro ? all.slice() : currentRows.slice();
-      if (rows.length === 0) { toast("当前筛选下没有可导出的链接"); return; }
+      if (rows.length === 0) { toast(t("toast_no_export_filter")); return; }
       var ts = Date.now();
       if (format === "json") download("netdisk-links-" + ts + ".json", JSON.stringify(rows, null, 2), "application/json");
       else if (format === "csv") download("netdisk-links-" + ts + ".csv", buildCsv(rows), "text/csv");
       else download("netdisk-links-" + ts + ".txt", buildTxt(rows), "text/plain");
       if (!pro && rows.length < all.length) {
-        toast("免费版仅导出当前 " + rows.length + " 条；开通 Pro 一键导出全部 " + all.length + " 条");
+        toast(t("toast_export_free", rows.length, all.length));
       } else {
-        toast("已导出 " + rows.length + " 条");
+        toast(t("toast_exported", rows.length));
       }
     });
   }
@@ -596,7 +596,7 @@
   // 导入：Pro 会员功能（备份恢复 / 换设备迁移）
   document.getElementById("importBtn").addEventListener("click", function () {
     isPro().then(function (pro) {
-      if (!pro) { requirePro("导入是 Pro 功能", "批量导入备份是 Pro 会员功能，可用于换设备迁移、恢复备份。开通后即可使用。"); return; }
+      if (!pro) { requirePro(t("import_pro_title"), t("import_pro_msg")); return; }
       document.getElementById("importFile").click();
     });
   });
@@ -608,7 +608,7 @@
     reader.onload = function () {
       try {
         var data = JSON.parse(reader.result);
-        if (!Array.isArray(data)) throw new Error("格式不正确");
+        if (!Array.isArray(data)) throw new Error(t("toast_invalid_format"));
         var index = {};
         all.forEach(function (l) { index[l.key] = true; });
         var added = 0;
@@ -625,9 +625,9 @@
           l.tags = l.tags || [];
           all.push(l); added++;
         });
-        persist().then(function () { refreshFilters(); render(); toast("导入完成，新增 " + added + " 条"); });
+        persist().then(function () { refreshFilters(); render(); toast(t("toast_import_done", added)); });
       } catch (err) {
-        toast("导入失败：" + err.message);
+        toast(t("toast_import_failed", err.message));
       }
     };
     reader.readAsText(file);
@@ -635,11 +635,11 @@
   });
 
   document.getElementById("clearAll").addEventListener("click", function () {
-    if (all.length === 0) { toast("没有数据"); return; }
-    showConfirm("确定清空全部 " + all.length + " 条收藏吗？此操作不可恢复。", { danger: true, okText: "清空" }).then(function (ok) {
+    if (all.length === 0) { toast(t("toast_no_data")); return; }
+    showConfirm(t("confirm_clear_all", all.length), { danger: true, okText: t("btn_clear") }).then(function (ok) {
       if (!ok) return;
       all = [];
-      persist().then(function () { refreshFilters(); render(); toast("已清空"); });
+      persist().then(function () { refreshFilters(); render(); toast(t("toast_cleared")); });
     });
   });
 
@@ -647,25 +647,22 @@
   var checkingLive = false;
   document.getElementById("checkLive").addEventListener("click", async function () {
     if (checkingLive) return;
-    if (all.length === 0) { toast("没有数据"); return; }
+    if (all.length === 0) { toast(t("toast_no_data")); return; }
 
     var pro = await isPro();
     if (!pro) {
       var u = await PRO.getUsage("check");
       var limit = PRO.LIMITS.FREE_CHECK_PER_DAY;
       if (u.count >= limit) {
-        requirePro("已达今日检测上限", "免费版每天最多检测失效 " + limit + " 次（今天已用完）。开通 Pro 可无限次批量检测。");
+        requirePro(t("check_limit_title"), t("check_limit_msg", limit));
         return;
       }
     }
 
     var targets = currentRows.length ? currentRows.slice() : all.slice();
-    showConfirm(
-      "将逐个联网访问当前 " + targets.length + " 条链接检测是否失效。\n" +
-      "注意：天翼/百度/夸克等网盘失效页面是动态加载的，可能无法识别会归为「无法确定」；检测较慢，请耐心等待。是否继续？" +
-      (pro ? "" : "\n（免费版今日剩余检测次数：" + (PRO.LIMITS.FREE_CHECK_PER_DAY - (await PRO.getUsage("check")).count) + "）"),
-      { okText: "开始检测" }
-    ).then(function (ok) {
+    var confirmMsg = t("check_confirm", targets.length) +
+      (pro ? "" : t("check_confirm_free_left", (PRO.LIMITS.FREE_CHECK_PER_DAY - (await PRO.getUsage("check")).count)));
+    showConfirm(confirmMsg, { okText: t("check_start") }).then(function (ok) {
       if (!ok) return;
       if (!pro && PRO) PRO.bumpUsage("check");
       runLivenessCheck(targets);
@@ -691,7 +688,7 @@
         if (l.liveness === "dead") dead++;
         else if (l.liveness === "alive") alive++;
         else unknown++;
-        btn.textContent = "检测中 " + done + "/" + links.length;
+        btn.textContent = t("check_progress", done, links.length);
       }
     }
 
@@ -701,33 +698,33 @@
 
     checkingLive = false;
     btn.disabled = false;
-    btn.textContent = "检测失效";
+    btn.textContent = t("opt_check_live");
     await persist();
     render();
-    toast("检测完成：有效 " + alive + " ｜ 失效 " + dead + " ｜ 无法确定 " + unknown);
+    toast(t("check_done", alive, dead, unknown));
 
     if (dead > 0) {
-      var go = await showConfirm("发现 " + dead + " 条已失效链接，是否删除它们？", { danger: true, okText: "删除失效" });
+      var go = await showConfirm(t("check_delete_dead", dead), { danger: true, okText: t("check_delete_dead_btn") });
       if (go) {
         all = all.filter(function (x) { return x.liveness !== "dead"; });
         await persist();
         refreshFilters();
         render();
-        toast("已删除 " + dead + " 条失效链接");
+        toast(t("check_deleted_dead", dead));
       }
     }
   }
 
   document.getElementById("cleanInvalid").addEventListener("click", function () {
-    if (all.length === 0) { toast("没有数据"); return; }
+    if (all.length === 0) { toast(t("toast_no_data")); return; }
     var before = all.length;
     var kept = all.filter(function (l) { return D.isShareLink(l.url) && !D.isLikelyTruncated(l.url); });
     var removed = before - kept.length;
-    if (removed === 0) { toast("没有发现格式无效/残缺的链接"); return; }
-    showConfirm("检测到 " + removed + " 条格式无效或被截断的残缺链接，确定清理吗？\n（注：已失效/被删除的分享无法自动识别，需联网逐个检查）", { danger: true, okText: "清理" }).then(function (ok) {
+    if (removed === 0) { toast(t("toast_no_invalid")); return; }
+    showConfirm(t("clean_confirm", removed), { danger: true, okText: t("btn_clean") }).then(function (ok) {
       if (!ok) return;
       all = kept;
-      persist().then(function () { refreshFilters(); render(); toast("已清理 " + removed + " 条"); });
+      persist().then(function () { refreshFilters(); render(); toast(t("toast_cleaned_n", removed)); });
     });
   });
 
@@ -751,11 +748,11 @@
     btn.addEventListener("click", function () {
       var fix = function (u) { return !u ? u : (/^https?:\/\//i.test(u) ? u : "https://" + u); };
       var html = "";
-      if (hasTg) html += '<a class="follow-link" href="' + escapeHtml(fix(f.tg.url)) + '" target="_blank" rel="noreferrer">' + escapeHtml(f.tg.text || "Telegram 频道") + " ▸</a>";
+      if (hasTg) html += '<a class="follow-link" href="' + escapeHtml(fix(f.tg.url)) + '" target="_blank" rel="noreferrer">' + escapeHtml(f.tg.text || t("follow_tg")) + " ▸</a>";
       if (hasMp) {
-        if (f.mp.url) html += '<a class="follow-link" href="' + escapeHtml(fix(f.mp.url)) + '" target="_blank" rel="noreferrer">' + escapeHtml(f.mp.text || "微信公众号") + " ▸</a>";
-        else html += '<div class="follow-name">' + escapeHtml(f.mp.text || "微信公众号") + "</div>";
-        if (f.mp.qr) html += '<img class="follow-qr" src="' + escapeHtml(f.mp.qr) + '" alt="公众号二维码" />';
+        if (f.mp.url) html += '<a class="follow-link" href="' + escapeHtml(fix(f.mp.url)) + '" target="_blank" rel="noreferrer">' + escapeHtml(f.mp.text || t("follow_wechat")) + " ▸</a>";
+        else html += '<div class="follow-name">' + escapeHtml(f.mp.text || t("follow_wechat")) + "</div>";
+        if (f.mp.qr) html += '<img class="follow-qr" src="' + escapeHtml(f.mp.qr) + '" alt="' + escapeHtml(t("follow_qr_alt")) + '" />';
       }
       body.innerHTML = html;
       modal.hidden = false;
