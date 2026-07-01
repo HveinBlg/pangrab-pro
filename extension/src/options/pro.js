@@ -30,7 +30,18 @@
     ".pro-hr{border:none;border-top:1px solid #eef0f4;margin:14px 0}",
     ".pro-tabs{display:flex;gap:8px;margin-bottom:12px}",
     ".pro-tab{padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px;background:#f3f5fa}",
-    ".pro-tab.active{background:#3d7fff;color:#fff}"
+    ".pro-tab.active{background:#3d7fff;color:#fff}",
+    // 自动同步：滑动开关
+    ".pro-autosync{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:#1f2733;cursor:pointer;user-select:none}",
+    ".pro-autosync .pro-autosync-text{line-height:1.4}",
+    ".pg-switch{position:relative;display:inline-block;flex:0 0 auto;width:42px;height:24px}",
+    ".pg-switch input{position:absolute;opacity:0;width:0;height:0;margin:0}",
+    ".pg-switch .slider{position:absolute;inset:0;background:#cfd6e4;border-radius:999px;transition:background .22s ease}",
+    ".pg-switch .slider::before{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(16,24,40,.25);transition:transform .22s ease}",
+    ".pg-switch input:checked + .slider{background:#3d7fff}",
+    ".pg-switch input:checked + .slider::before{transform:translateX(18px)}",
+    ".pg-switch input:focus-visible + .slider{box-shadow:0 0 0 3px rgba(61,127,255,.35)}",
+    ".pg-switch input:disabled + .slider{opacity:.5;cursor:not-allowed}"
   ].join("");
   document.head.appendChild(style);
 
@@ -150,8 +161,9 @@
         '<button class="pro-btn primary" id="proUpload">⬆ 上传到云端</button>' +
         '<button class="pro-btn ghost" id="proDownload">⬇ 从云端下载并合并</button>' +
       "</div>" +
-      '<label class="pro-autosync" style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:#1f2733;cursor:pointer">' +
-        '<input type="checkbox" id="proAutoSync"/> 自动同步（每 30 分钟与云端合并，多设备保持一致）' +
+      '<label class="pro-autosync">' +
+        '<span class="pg-switch"><input type="checkbox" id="proAutoSync"/><span class="slider"></span></span>' +
+        '<span class="pro-autosync-text">自动同步（每 30 分钟与云端合并，多设备保持一致）</span>' +
       "</label>" +
       '<div id="proLastSync" class="pro-lastsync" style="font-size:12px;color:#7a869a;margin-top:6px"></div>' +
       '<hr class="pro-hr"/>' +
