@@ -222,5 +222,10 @@
   "bg_saved_title": { "message": "Saved $1 link(s)" },
   "bg_saved_limit_msg": { "message": "Some not saved: reached the free limit of $1. Upgrade to Pro for unlimited saves." },
   "bg_saved_skipped_msg": { "message": "($1 already existed, skipped)" },
-  "bg_saved_total_msg": { "message": "$1 saved in total." }
+  "bg_saved_total_msg": { "message": "$1 saved in total." },
+
+  "reason_empty": { "message": "Empty link" },
+  "reason_dead_page": { "message": "Page indicates the share is unavailable" },
+  "reason_timeout": { "message": "Timeout" },
+  "reason_failed": { "message": "Request failed" }
 }

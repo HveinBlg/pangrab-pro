@@ -31,7 +31,7 @@
         body: opts.body ? JSON.stringify(opts.body) : undefined
       });
     } catch (e) {
-      throw new Error("无法连接服务器，请检查网络或后端地址");
+      throw new Error((root.t ? root.t("pro_conn_failed") : "Cannot reach the server. Check your network or backend address"));
     }
     try { data = await res.json(); } catch (e) { data = {}; }
     if (!res.ok) {

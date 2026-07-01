@@ -222,5 +222,10 @@
   "bg_saved_title": { "message": "\u5df2\u6536\u85cf $1 \u6761\u94fe\u63a5" },
   "bg_saved_limit_msg": { "message": "\u90e8\u5206\u672a\u4fdd\u5b58\uff1a\u5df2\u8fbe\u514d\u8d39\u4e0a\u9650 $1 \u6761\uff0c\u5f00\u901a Pro \u89e3\u9501\u65e0\u9650\u6536\u85cf\u3002" },
   "bg_saved_skipped_msg": { "message": "\uff08$1 \u6761\u5df2\u5b58\u5728\uff0c\u5df2\u8df3\u8fc7\uff09" },
-  "bg_saved_total_msg": { "message": "\u5171 $1 \u6761\u6536\u85cf\u3002" }
+  "bg_saved_total_msg": { "message": "\u5171 $1 \u6761\u6536\u85cf\u3002" },
+
+  "reason_empty": { "message": "\u7a7a\u94fe\u63a5" },
+  "reason_dead_page": { "message": "\u9875\u9762\u63d0\u793a\u5931\u6548" },
+  "reason_timeout": { "message": "\u8d85\u65f6" },
+  "reason_failed": { "message": "\u8bf7\u6c42\u5931\u8d25" }
 }

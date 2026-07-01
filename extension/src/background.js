@@ -128,7 +128,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 var DEAD_KEYWORDS = /(来晚了)|(分享|文件|链接|页面|资源|内容)\s*.{0,8}(已?取消|失效|不存在|已?删除|被删除|已过期|过期了)|分享已(取消|过期|失效|关闭)|该(分享|链接|文件)\s*.{0,6}(不存在|已失效|已过期|已取消)|访问的页面不存在|页面不存在|expired|has been (deleted|cancell?ed|removed)|does\s?n['’]?t exist|not\s?found/i;
 
 async function checkLink(url) {
-  if (!url) return { state: "unknown", reason: "空链接" };
+  if (!url) return { state: "unknown", reason: chrome.i18n.getMessage("reason_empty") };
   var ctrl = new AbortController();
   var timer = setTimeout(function () { ctrl.abort(); }, 12000);
   try {
@@ -138,12 +138,12 @@ async function checkLink(url) {
     if (status === 404 || status === 410) return { state: "dead", reason: "HTTP " + status };
     var text = "";
     try { text = (await resp.text()).slice(0, 30000); } catch (e) { /* ignore */ }
-    if (DEAD_KEYWORDS.test(text)) return { state: "dead", reason: "页面提示失效" };
+    if (DEAD_KEYWORDS.test(text)) return { state: "dead", reason: chrome.i18n.getMessage("reason_dead_page") };
     if (status >= 200 && status < 400) return { state: "alive", reason: "HTTP " + status };
     return { state: "unknown", reason: "HTTP " + status };
   } catch (e) {
     clearTimeout(timer);
-    return { state: "unknown", reason: (e && e.name === "AbortError") ? "超时" : "请求失败" };
+    return { state: "unknown", reason: (e && e.name === "AbortError") ? chrome.i18n.getMessage("reason_timeout") : chrome.i18n.getMessage("reason_failed") };
   }
 }
 
@@ -152,7 +152,7 @@ async function checkLink(url) {
 chrome.runtime.onInstalled.addListener(function () {
   chrome.contextMenus.create({
     id: "save-netdisk-link",
-    title: "收藏此网盘链接",
+    title: chrome.i18n.getMessage("bg_menu_save"),
     contexts: ["link", "selection"]
   });
   ensureAlarms();
@@ -193,19 +193,19 @@ chrome.contextMenus.onClicked.addListener(async function (info, tab) {
   });
 
   if (links.length === 0) {
-    notify("未识别到网盘链接", "选中的内容里没有可识别的网盘分享链接。");
+    notify(chrome.i18n.getMessage("bg_no_link_title"), chrome.i18n.getMessage("bg_no_link_msg"));
     return;
   }
 
   var result = await saveLinks(links);
   if (result.limitReached && result.added === 0) {
-    notify("已达免费版收藏上限", "免费版最多收藏 " + result.max + " 条。开通 Pro 会员可无限收藏（在收藏管理页「账号 / 云同步」开通）。");
+    notify(chrome.i18n.getMessage("bg_limit_title"), chrome.i18n.getMessage("bg_limit_msg", [String(result.max)]));
     return;
   }
   notify(
-    "已收藏 " + result.added + " 条链接",
-    (result.limitReached ? "部分未保存：已达免费上限 " + result.max + " 条，开通 Pro 解锁无限收藏。" :
-      (result.skipped > 0 ? "（" + result.skipped + " 条已存在，已跳过）" : "共 " + result.total + " 条收藏。"))
+    chrome.i18n.getMessage("bg_saved_title", [String(result.added)]),
+    (result.limitReached ? chrome.i18n.getMessage("bg_saved_limit_msg", [String(result.max)]) :
+      (result.skipped > 0 ? chrome.i18n.getMessage("bg_saved_skipped_msg", [String(result.skipped)]) : chrome.i18n.getMessage("bg_saved_total_msg", [String(result.total)])))
   );
 });
 

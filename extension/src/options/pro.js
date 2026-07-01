@@ -64,7 +64,7 @@
   var btn = document.createElement("button");
   btn.className = "ghost";
   btn.id = "proAccountBtn";
-  btn.textContent = "☁️ 账号 / 云同步";
+  btn.textContent = t("pro_account_btn");
   if (headerActions) headerActions.insertBefore(btn, headerActions.firstChild);
 
   /* ---------- 弹窗 ---------- */
@@ -74,8 +74,8 @@
   modal.hidden = true;
   modal.innerHTML =
     '<div class="modal-card">' +
-      '<button type="button" class="modal-close" id="proClose" aria-label="关闭">✕</button>' +
-      '<h3>账号 / 云同步</h3>' +
+      '<button type="button" class="modal-close" id="proClose" aria-label="' + t("opt_close") + '">✕</button>' +
+      "<h3>" + t("pro_account_title") + "</h3>" +
       '<div id="proBody"></div>' +
       '<div class="pro-msg" id="proMsg"></div>' +
     "</div>";
@@ -111,32 +111,32 @@
 
   function renderAuth() {
     body.innerHTML =
-      '<div class="pro-tabs"><div class="pro-tab active" data-t="login">登录</div><div class="pro-tab" data-t="reg">注册</div></div>' +
-      '<div class="pro-field"><label>邮箱</label><input id="proEmail" type="email" autocomplete="off" placeholder="you@example.com"/></div>' +
-      '<div class="pro-field"><label>密码（至少6位）</label><input id="proPass" type="password" autocomplete="off" placeholder="••••••"/></div>' +
-      '<div class="pro-row"><button class="pro-btn primary" id="proSubmit">登录</button></div>';
+      '<div class="pro-tabs"><div class="pro-tab active" data-t="login">' + t("pro_tab_login") + '</div><div class="pro-tab" data-t="reg">' + t("pro_tab_register") + "</div></div>" +
+      '<div class="pro-field"><label>' + t("pro_email") + '</label><input id="proEmail" type="email" autocomplete="off" placeholder="you@example.com"/></div>' +
+      '<div class="pro-field"><label>' + t("pro_password") + '</label><input id="proPass" type="password" autocomplete="off" placeholder="••••••"/></div>' +
+      '<div class="pro-row"><button class="pro-btn primary" id="proSubmit">' + t("pro_login") + "</button></div>";
     var mode = "login";
-    Array.prototype.forEach.call(body.querySelectorAll(".pro-tab"), function (t) {
-      t.addEventListener("click", function () {
+    Array.prototype.forEach.call(body.querySelectorAll(".pro-tab"), function (t2) {
+      t2.addEventListener("click", function () {
         body.querySelectorAll(".pro-tab").forEach(function (x) { x.classList.remove("active"); });
-        t.classList.add("active");
-        mode = t.getAttribute("data-t");
-        body.querySelector("#proSubmit").textContent = mode === "login" ? "登录" : "注册";
+        t2.classList.add("active");
+        mode = t2.getAttribute("data-t");
+        body.querySelector("#proSubmit").textContent = mode === "login" ? t("pro_login") : t("pro_register");
         msg("");
       });
     });
     body.querySelector("#proSubmit").addEventListener("click", async function () {
       var email = body.querySelector("#proEmail").value.trim();
       var pass = body.querySelector("#proPass").value;
-      if (!email || !pass) { msg("请填写邮箱和密码"); return; }
+      if (!email || !pass) { msg(t("pro_fill_all")); return; }
       try {
         var r = mode === "login" ? await ProAPI.login(email, pass) : await ProAPI.register(email, pass);
         await ProAPI.setToken(r.token);
         state.user = r.user;
         if (self.PanGrabPro) self.PanGrabPro.setState(r.user);
-        msg(mode === "login" ? "登录成功" : "注册成功", true);
+        msg(mode === "login" ? t("pro_login_ok") : t("pro_register_ok"), true);
         renderAccount();
-      } catch (e) { msg(e.message || "失败"); }
+      } catch (e) { msg(e.message || t("pro_failed")); }
     });
   }
 
@@ -151,49 +151,49 @@
     if (!el) return;
     chrome.storage.local.get(["last_sync"], function (x) {
       var s = x && x.last_sync;
-      if (!s || !s.at) { el.textContent = "尚未自动同步"; return; }
+      if (!s || !s.at) { el.textContent = t("pro_not_synced"); return; }
       var d = new Date(s.at), p = function (n) { return n < 10 ? "0" + n : n; };
-      var t = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
-      el.textContent = "上次自动同步：" + t + (s.ok ? "" : "（失败，将稍后重试）");
+      var tt = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+      el.textContent = t("pro_last_sync", tt) + (s.ok ? "" : t("pro_sync_failed_retry"));
     });
   }
 
   function renderAccount() {
     var u = state.user || {};
-    var buyLabel = isMainlandChina() ? "💳 购买会员（支付宝）" : "💳 Upgrade to Pro / 购买会员";
+    var buyLabel = isMainlandChina() ? t("pro_buy_alipay") : t("pro_buy_intl");
     var proHtml = u.is_pro
-      ? '<span class="pro-badge on">Pro 会员</span> 到期：' + fmtDate(u.pro_until)
-      : '<span class="pro-badge off">免费用户</span>';
+      ? '<span class="pro-badge on">' + t("pro_badge_on") + "</span> " + t("pro_expires", fmtDate(u.pro_until))
+      : '<span class="pro-badge off">' + t("pro_badge_off") + "</span>";
     body.innerHTML =
       '<div class="pro-status">' + (u.email || "") + "<br/>" + proHtml + "</div>" +
-      '<div class="pro-field"><label>兑换码（激活/续期会员）</label>' +
+      '<div class="pro-field"><label>' + t("pro_redeem_label") + "</label>" +
         '<div class="pro-row"><input id="proCode" placeholder="PG-XXXXXXXX" style="flex:1"/>' +
-        '<button class="pro-btn primary" id="proRedeem">兑换</button></div></div>' +
-      '<div class="pro-row" style="margin-top:8px"><button class="pro-btn primary" id="proBuy" style="flex:1">' + buyLabel + '</button></div>' +
+        '<button class="pro-btn primary" id="proRedeem">' + t("pro_redeem") + "</button></div></div>" +
+      '<div class="pro-row" style="margin-top:8px"><button class="pro-btn primary" id="proBuy" style="flex:1">' + buyLabel + "</button></div>" +
       '<hr class="pro-hr"/>' +
-      '<div style="font-size:13px;color:#1f2733;margin-bottom:8px;font-weight:600">云同步（Pro）</div>' +
+      '<div style="font-size:13px;color:#1f2733;margin-bottom:8px;font-weight:600">' + t("pro_sync_section") + "</div>" +
       '<div class="pro-row">' +
-        '<button class="pro-btn primary" id="proUpload">⬆ 上传到云端</button>' +
-        '<button class="pro-btn ghost" id="proDownload">⬇ 从云端下载并合并</button>' +
+        '<button class="pro-btn primary" id="proUpload">' + t("pro_upload") + "</button>" +
+        '<button class="pro-btn ghost" id="proDownload">' + t("pro_download") + "</button>" +
       "</div>" +
       '<label class="pro-autosync">' +
-        '<span class="pro-autosync-text">自动同步（每 30 分钟与云端合并，多设备保持一致）</span>' +
+        '<span class="pro-autosync-text">' + t("pro_autosync") + "</span>" +
         '<span class="pg-switch"><input type="checkbox" id="proAutoSync"/><span class="slider"></span></span>' +
       "</label>" +
       '<div id="proLastSync" class="pro-lastsync" style="font-size:12px;color:#7a869a;margin-top:6px"></div>' +
       '<hr class="pro-hr"/>' +
-      '<div class="pro-row"><button class="pro-btn ghost" id="proLogout">退出登录</button></div>';
+      '<div class="pro-row"><button class="pro-btn ghost" id="proLogout">' + t("pro_logout") + "</button></div>";
 
     body.querySelector("#proRedeem").addEventListener("click", async function () {
       var code = body.querySelector("#proCode").value.trim();
-      if (!code) { msg("请输入兑换码"); return; }
+      if (!code) { msg(t("pro_enter_code")); return; }
       try {
         var r = await ProAPI.redeem(code);
         state.user = r.user;
         if (self.PanGrabPro) self.PanGrabPro.setState(r.user);
-        msg("激活成功，增加 " + r.added_days + " 天会员", true);
+        msg(t("pro_redeem_ok", r.added_days), true);
         renderAccount();
-      } catch (e) { msg(e.message || "兑换失败"); }
+      } catch (e) { msg(e.message || t("pro_redeem_failed")); }
     });
     body.querySelector("#proUpload").addEventListener("click", uploadSync);
     body.querySelector("#proDownload").addEventListener("click", downloadSync);
@@ -205,14 +205,14 @@
       autoChk.addEventListener("change", function () {
         if (autoChk.checked && !(state.user && state.user.is_pro)) {
           autoChk.checked = false;
-          msg("自动同步需要 Pro 会员"); return;
+          msg(t("pro_autosync_need_pro")); return;
         }
         chrome.storage.local.set({ auto_sync: autoChk.checked }, function () {
           if (autoChk.checked) {
-            msg("已开启自动同步，正在同步…", true);
+            msg(t("pro_autosync_on"), true);
             chrome.runtime.sendMessage({ type: "AUTO_SYNC_NOW" }, function () { renderLastSync(); });
           } else {
-            msg("已关闭自动同步", true);
+            msg(t("pro_autosync_off"), true);
           }
         });
       });
@@ -220,15 +220,15 @@
     renderLastSync();
     body.querySelector("#proBuy").addEventListener("click", async function () {
       var token = await ProAPI.getToken();
-      if (!token) { msg("请先登录后再购买"); return; }
+      if (!token) { msg(t("pro_login_before_buy")); return; }
       var url = ProAPI.base() + "/buy?token=" + encodeURIComponent(token);
       window.open(url, "_blank");
-      msg("已打开购买页，完成支付后回到本面板重新打开即可刷新会员状态", true);
+      msg(t("pro_buy_opened"), true);
     });
     body.querySelector("#proLogout").addEventListener("click", async function () {
       await ProAPI.clearToken();
       if (self.PanGrabPro) self.PanGrabPro.clearState();
-      state.user = null; renderAuth(); msg("已退出", true);
+      state.user = null; renderAuth(); msg(t("pro_logged_out"), true);
     });
   }
 
@@ -251,16 +251,16 @@
     try {
       var local = await readLocal();
       await ProAPI.syncPut({ links: local.links, categories: local.categories });
-      msg("已上传到云端（" + local.links.length + " 条）", true);
+      msg(t("pro_uploaded", local.links.length), true);
     } catch (e) {
-      msg(e.code === "NEED_PRO" ? "云同步需要 Pro 会员，请先兑换" : (e.message || "上传失败"));
+      msg(e.code === "NEED_PRO" ? t("pro_need_pro_sync") : (e.message || t("pro_upload_failed")));
     }
   }
 
   async function downloadSync() {
     try {
       var r = await ProAPI.syncGet();
-      if (!r.payload) { msg("云端还没有数据，请先在某一端上传", true); return; }
+      if (!r.payload) { msg(t("pro_no_cloud_data"), true); return; }
       var cloud = r.payload;
       var local = await readLocal();
       // 合并：链接按 key 去重，分类取并集
@@ -272,9 +272,9 @@
       (local.categories || []).concat(cloud.categories || []).forEach(function (c) { if (c) catSet[c] = true; });
       var mergedCats = Object.keys(catSet);
       await writeLocal(mergedLinks, mergedCats); // storage.onChanged 会自动刷新界面
-      msg("已合并云端数据，现在共 " + mergedLinks.length + " 条", true);
+      msg(t("pro_merged", mergedLinks.length), true);
     } catch (e) {
-      msg(e.code === "NEED_PRO" ? "云同步需要 Pro 会员，请先兑换" : (e.message || "下载失败"));
+      msg(e.code === "NEED_PRO" ? t("pro_need_pro_sync") : (e.message || t("pro_download_failed")));
     }
   }
 })();
