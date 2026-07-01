@@ -12,6 +12,19 @@
   var CAT_KEY = "categories";
   var state = { user: null };
 
+  // 是否中国大陆用户：时区优先（台湾/香港/澳门及海外都不算），回退到简体中文语言。
+  // 与购买页 buy.html 的判断保持一致，用于按钮文案的地区适配。
+  function isMainlandChina() {
+    try {
+      var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").toLowerCase();
+      if (tz.indexOf("taipei") !== -1 || tz.indexOf("hong_kong") !== -1 || tz.indexOf("macau") !== -1) return false;
+      var cnZones = ["shanghai", "urumqi", "chongqing", "harbin", "kashgar"];
+      for (var i = 0; i < cnZones.length; i++) { if (tz.indexOf(cnZones[i]) !== -1) return true; }
+    } catch (e) { /* 时区不可用则回退到语言判断 */ }
+    var lang = (navigator.language || "").toLowerCase();
+    return lang === "zh-cn" || lang.indexOf("zh-hans") === 0;
+  }
+
   /* ---------- 样式 ---------- */
   var style = document.createElement("style");
   style.textContent = [
@@ -147,6 +160,7 @@
 
   function renderAccount() {
     var u = state.user || {};
+    var buyLabel = isMainlandChina() ? "💳 购买会员（支付宝）" : "💳 Upgrade to Pro / 购买会员";
     var proHtml = u.is_pro
       ? '<span class="pro-badge on">Pro 会员</span> 到期：' + fmtDate(u.pro_until)
       : '<span class="pro-badge off">免费用户</span>';
@@ -155,7 +169,7 @@
       '<div class="pro-field"><label>兑换码（激活/续期会员）</label>' +
         '<div class="pro-row"><input id="proCode" placeholder="PG-XXXXXXXX" style="flex:1"/>' +
         '<button class="pro-btn primary" id="proRedeem">兑换</button></div></div>' +
-      '<div class="pro-row" style="margin-top:8px"><button class="pro-btn primary" id="proBuy" style="flex:1">💳 购买会员 / Upgrade to Pro</button></div>' +
+      '<div class="pro-row" style="margin-top:8px"><button class="pro-btn primary" id="proBuy" style="flex:1">' + buyLabel + '</button></div>' +
       '<hr class="pro-hr"/>' +
       '<div style="font-size:13px;color:#1f2733;margin-bottom:8px;font-weight:600">云同步（Pro）</div>' +
       '<div class="pro-row">' +
