@@ -106,8 +106,9 @@
 
 <script>
 (function () {
-  /* ---------- i18n 字典（按浏览器语言：zh-* → 中文，其它 → 英文） ---------- */
-  var LANG = (navigator.language || "").toLowerCase().indexOf("zh") === 0 ? "zh" : "en";
+  /* ---------- i18n 字典（zh-TW/zh-HK → 繁体；其它 zh-* → 简体；否则英文） ---------- */
+  var _lc = (navigator.language || "").toLowerCase();
+  var LANG = /^zh-(tw|hk|mo|hant)/.test(_lc) ? "tw" : (_lc.indexOf("zh") === 0 ? "zh" : "en");
   var DICT = {
     zh: {
       title: "开通 PanGrab Pro",
@@ -128,6 +129,26 @@
       creating: "正在创建订单…", redirecting: "正在跳转支付…",
       order_failed: "下单失败", order_bad: "下单返回异常",
       no_token: "缺少登录凭证，请从扩展内的「购买会员」按钮进入本页。"
+    },
+    tw: {
+      title: "開通 PanGrab Pro",
+      sub: "選擇方案與付款方式，款項到帳後自動開通會員。",
+      tab_alipay: "支付寶", tab_intl: "International",
+      plan_month_name: "月卡 / Monthly", plan_month_desc: "30 天 · 雲端同步無限制",
+      plan_quarter_name: "季卡 / Quarterly", plan_quarter_desc: "90 天 · 更划算",
+      plan_year_name: "年卡 / Yearly", plan_year_desc: "365 天 · 最超值",
+      pay: "付款", qr_title: "支付寶掃碼付款", qr_tip: "請用手機支付寶「掃一掃」付款",
+      qr_wait: "等待付款中…", qr_back: "‹ 返回重新選擇",
+      foot: "付款遇到問題？可在擴充功能中使用兌換碼啟用。<br/>付款完成後請返回擴充功能「帳號 / 雲端同步」面板重新整理。",
+      img_alt: "付款 QR Code",
+      pay_alipay_btn: "使用支付寶付款", pay_intl_btn: "Pay (International)",
+      unit_month: "/月", unit_quarter: "/季", unit_year: "/年",
+      local_currency: "當地貨幣結算<br/>local currency",
+      no_online_pay: "目前未開通線上付款，請在擴充功能中使用兌換碼啟用，或聯繫客服。",
+      paid_ok: "✓ 付款成功！會員已開通，請回擴充功能重新整理。",
+      creating: "正在建立訂單…", redirecting: "正在前往付款…",
+      order_failed: "下單失敗", order_bad: "下單回傳異常",
+      no_token: "缺少登入憑證，請從擴充功能內的「購買會員」按鈕進入本頁。"
     },
     en: {
       title: "Upgrade to PanGrab Pro",
@@ -153,7 +174,7 @@
   function L(key) { return (DICT[LANG] && DICT[LANG][key]) || DICT.en[key] || key; }
 
   function applyStaticI18n() {
-    document.documentElement.setAttribute("lang", LANG === "zh" ? "zh-CN" : "en");
+    document.documentElement.setAttribute("lang", LANG === "tw" ? "zh-TW" : (LANG === "zh" ? "zh-CN" : "en"));
     document.title = L("title");
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (node) {
       node.innerHTML = L(node.getAttribute("data-i18n"));
