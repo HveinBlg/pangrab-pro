@@ -7,7 +7,7 @@
 ## 准备：把代码放到服务器
 ```bash
 # 在你的服务器(VPS/GCP VM)上
-git clone https://github.com/T7777520/pangrab-pro.git
+git clone https://github.com/HveinBlg/pangrab-pro.git
 cd pangrab-pro/server
 # 装 Node 18+（若没装）：用 nvm 或系统包管理器
 npm install
