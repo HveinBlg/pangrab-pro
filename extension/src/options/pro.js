@@ -155,7 +155,7 @@
       '<div class="pro-field"><label>兑换码（激活/续期会员）</label>' +
         '<div class="pro-row"><input id="proCode" placeholder="PG-XXXXXXXX" style="flex:1"/>' +
         '<button class="pro-btn primary" id="proRedeem">兑换</button></div></div>' +
-      '<div class="pro-row" style="margin-top:8px"><button class="pro-btn primary" id="proBuy" style="flex:1">💳 购买会员（支付宝）</button></div>' +
+      '<div class="pro-row" style="margin-top:8px"><button class="pro-btn primary" id="proBuy" style="flex:1">💳 购买会员 / Upgrade to Pro</button></div>' +
       '<hr class="pro-hr"/>' +
       '<div style="font-size:13px;color:#1f2733;margin-bottom:8px;font-weight:600">云同步（Pro）</div>' +
       '<div class="pro-row">' +

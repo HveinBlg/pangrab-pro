@@ -123,7 +123,18 @@
   var selectView = el("selectView"), qrView = el("qrView");
 
   function msg(t, ok) { msgEl.textContent = t || ""; msgEl.className = "msg " + (ok ? "ok" : "err"); }
-  function isZh() { return (navigator.language || "").toLowerCase().indexOf("zh") === 0; }
+  // 是否中国大陆用户：优先看时区（台湾/香港/澳门及海外都不算），回退到简体中文语言。
+  // 大陆用户默认支付宝(CNY)，其余地区默认国际支付(Lemon Squeezy，按当地货币结算)。
+  function isMainlandChina() {
+    try {
+      var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").toLowerCase();
+      if (tz.indexOf("taipei") !== -1 || tz.indexOf("hong_kong") !== -1 || tz.indexOf("macau") !== -1) return false;
+      var cnZones = ["shanghai", "urumqi", "chongqing", "harbin", "kashgar"];
+      for (var i = 0; i < cnZones.length; i++) { if (tz.indexOf(cnZones[i]) !== -1) return true; }
+    } catch (e) { /* 时区不可用则回退到语言判断 */ }
+    var lang = (navigator.language || "").toLowerCase();
+    return lang === "zh-cn" || lang.indexOf("zh-hans") === 0;
+  }
 
   function renderPrices() {
     ["month", "quarter", "year"].forEach(function (k) {
@@ -156,7 +167,7 @@
     if (available.length === 0) { el("tabs").classList.add("hide"); btn.disabled = true;
       msg("当前未开通在线支付，请在扩展中使用兑换码激活，或联系客服。"); return; }
     if (available.length === 1) el("tabs").classList.add("hide");
-    var prefer = isZh() ? "alipay" : "lemonsqueezy";
+    var prefer = isMainlandChina() ? "alipay" : "lemonsqueezy";
     if (available.indexOf(prefer) === -1) prefer = available[0];
     setProvider(prefer);
   }
