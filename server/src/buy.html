@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>开通 PanGrab Pro</title>
+<title>Upgrade to PanGrab Pro</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -64,51 +64,104 @@
   <div class="card">
     <!-- 选择视图 -->
     <div id="selectView">
-      <h1>开通 PanGrab Pro</h1>
-      <div class="sub">选择套餐与支付方式，到账后自动开通会员。</div>
+      <h1 data-i18n="title">Upgrade to PanGrab Pro</h1>
+      <div class="sub" data-i18n="sub">Choose a plan and payment method. Membership activates automatically after payment.</div>
 
       <div class="tabs" id="tabs">
-        <div class="tab" data-prov="alipay" id="tabAlipay">支付宝</div>
-        <div class="tab" data-prov="lemonsqueezy" id="tabIntl">International</div>
+        <div class="tab" data-prov="alipay" id="tabAlipay" data-i18n="tab_alipay">Alipay</div>
+        <div class="tab" data-prov="lemonsqueezy" id="tabIntl" data-i18n="tab_intl">International</div>
       </div>
 
       <div class="plans" id="plans">
         <div class="plan active" data-plan="month">
-          <div><div class="name">月卡 / Monthly</div><div class="desc">30 天 · 云同步无限制</div></div>
+          <div><div class="name" data-i18n="plan_month_name">Monthly</div><div class="desc" data-i18n="plan_month_desc">30 days · unlimited cloud sync</div></div>
           <div class="price" data-p="month"></div>
         </div>
         <div class="plan" data-plan="quarter">
-          <div><div class="name">季卡 / Quarterly</div><div class="desc">90 天 · 更划算</div></div>
+          <div><div class="name" data-i18n="plan_quarter_name">Quarterly</div><div class="desc" data-i18n="plan_quarter_desc">90 days · better value</div></div>
           <div class="price" data-p="quarter"></div>
         </div>
         <div class="plan" data-plan="year">
-          <div><div class="name">年卡 / Yearly</div><div class="desc">365 天 · 最超值</div></div>
+          <div><div class="name" data-i18n="plan_year_name">Yearly</div><div class="desc" data-i18n="plan_year_desc">365 days · best value</div></div>
           <div class="price" data-p="year"></div>
         </div>
       </div>
 
-      <button class="btn" id="payBtn">支付</button>
+      <button class="btn" id="payBtn" data-i18n="pay">Pay</button>
       <div class="msg" id="msg"></div>
-      <div class="foot">
-        支付遇到问题？可在扩展中使用兑换码激活。<br/>
-        支付完成后请返回扩展「账号 / 云同步」面板刷新。
-      </div>
+      <div class="foot" data-i18n="foot">Payment issue? You can activate with a redemption code in the extension.<br/>After paying, return to the extension's "Account / Cloud Sync" panel and refresh.</div>
     </div>
 
     <!-- 扫码视图 -->
     <div id="qrView" class="qr-wrap hide">
-      <h1>支付宝扫码支付</h1>
+      <h1 data-i18n="qr_title">Scan to pay with Alipay</h1>
       <div class="qr-amount" id="qrAmount"></div>
       <div class="qr-sub" id="qrSubject"></div>
-      <div class="qr-box"><img id="qrImg" alt="支付二维码" /></div>
-      <div class="qr-tip">请用手机支付宝「扫一扫」支付</div>
-      <div class="qr-status" id="qrStatus"><span class="spinner"></span>等待支付中…</div>
-      <span class="link" id="qrBack">‹ 返回重新选择</span>
+      <div class="qr-box"><img id="qrImg" alt="Payment QR code" /></div>
+      <div class="qr-tip" data-i18n="qr_tip">Scan with the Alipay app to pay</div>
+      <div class="qr-status" id="qrStatus"><span class="spinner"></span><span data-i18n="qr_wait">Waiting for payment…</span></div>
+      <span class="link" id="qrBack" data-i18n="qr_back">‹ Back</span>
     </div>
   </div>
 
 <script>
 (function () {
+  /* ---------- i18n 字典（按浏览器语言：zh-* → 中文，其它 → 英文） ---------- */
+  var LANG = (navigator.language || "").toLowerCase().indexOf("zh") === 0 ? "zh" : "en";
+  var DICT = {
+    zh: {
+      title: "开通 PanGrab Pro",
+      sub: "选择套餐与支付方式，到账后自动开通会员。",
+      tab_alipay: "支付宝", tab_intl: "International",
+      plan_month_name: "月卡 / Monthly", plan_month_desc: "30 天 · 云同步无限制",
+      plan_quarter_name: "季卡 / Quarterly", plan_quarter_desc: "90 天 · 更划算",
+      plan_year_name: "年卡 / Yearly", plan_year_desc: "365 天 · 最超值",
+      pay: "支付", qr_title: "支付宝扫码支付", qr_tip: "请用手机支付宝「扫一扫」支付",
+      qr_wait: "等待支付中…", qr_back: "‹ 返回重新选择",
+      foot: "支付遇到问题？可在扩展中使用兑换码激活。<br/>支付完成后请返回扩展「账号 / 云同步」面板刷新。",
+      img_alt: "支付二维码",
+      pay_alipay_btn: "使用支付宝支付", pay_intl_btn: "Pay (International)",
+      unit_month: "/月", unit_quarter: "/季", unit_year: "/年",
+      local_currency: "本地货币结算<br/>local currency",
+      no_online_pay: "当前未开通在线支付，请在扩展中使用兑换码激活，或联系客服。",
+      paid_ok: "✓ 支付成功！会员已开通，请回扩展刷新。",
+      creating: "正在创建订单…", redirecting: "正在跳转支付…",
+      order_failed: "下单失败", order_bad: "下单返回异常",
+      no_token: "缺少登录凭证，请从扩展内的「购买会员」按钮进入本页。"
+    },
+    en: {
+      title: "Upgrade to PanGrab Pro",
+      sub: "Choose a plan and payment method. Membership activates automatically after payment.",
+      tab_alipay: "Alipay", tab_intl: "International",
+      plan_month_name: "Monthly", plan_month_desc: "30 days · unlimited cloud sync",
+      plan_quarter_name: "Quarterly", plan_quarter_desc: "90 days · better value",
+      plan_year_name: "Yearly", plan_year_desc: "365 days · best value",
+      pay: "Pay", qr_title: "Scan to pay with Alipay", qr_tip: "Scan with the Alipay app to pay",
+      qr_wait: "Waiting for payment…", qr_back: "‹ Back",
+      foot: "Payment issue? You can activate with a redemption code in the extension.<br/>After paying, return to the extension's \"Account / Cloud Sync\" panel and refresh.",
+      img_alt: "Payment QR code",
+      pay_alipay_btn: "Pay with Alipay", pay_intl_btn: "Pay (International)",
+      unit_month: "/mo", unit_quarter: "/qtr", unit_year: "/yr",
+      local_currency: "Local currency<br/>local pricing",
+      no_online_pay: "Online payment is not available. Please activate with a redemption code in the extension, or contact support.",
+      paid_ok: "✓ Paid! Membership activated. Please return to the extension and refresh.",
+      creating: "Creating order…", redirecting: "Redirecting…",
+      order_failed: "Failed to create order", order_bad: "Unexpected order response",
+      no_token: "Missing login token. Please open this page via the \u201cBuy membership\u201d button in the extension."
+    }
+  };
+  function L(key) { return (DICT[LANG] && DICT[LANG][key]) || DICT.en[key] || key; }
+
+  function applyStaticI18n() {
+    document.documentElement.setAttribute("lang", LANG === "zh" ? "zh-CN" : "en");
+    document.title = L("title");
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (node) {
+      node.innerHTML = L(node.getAttribute("data-i18n"));
+    });
+    var img = document.getElementById("qrImg");
+    if (img) img.setAttribute("alt", L("img_alt"));
+  }
+
   var params = new URLSearchParams(location.search);
   var token = params.get("token") || "";
   var selectedPlan = "month";
@@ -141,10 +194,10 @@
       var node = plansEl.querySelector('[data-p="' + k + '"]');
       if (!node) return;
       if (provider === "alipay" && plans && plans[k]) {
-        var unit = k === "month" ? "/月" : k === "quarter" ? "/季" : "/年";
+        var unit = k === "month" ? L("unit_month") : k === "quarter" ? L("unit_quarter") : L("unit_year");
         node.innerHTML = "\u00a5" + plans[k].amount + '<small>' + unit + '</small>';
       } else {
-        node.innerHTML = '<small>本地货币结算<br/>local currency</small>';
+        node.innerHTML = '<small>' + L("local_currency") + '</small>';
       }
     });
   }
@@ -153,8 +206,8 @@
     provider = p;
     tabAlipay.classList.toggle("active", p === "alipay");
     tabIntl.classList.toggle("active", p === "lemonsqueezy");
-    if (p === "alipay") { btn.className = "btn"; btn.textContent = "使用支付宝支付"; }
-    else { btn.className = "btn intl"; btn.textContent = "Pay (International)"; }
+    if (p === "alipay") { btn.className = "btn"; btn.textContent = L("pay_alipay_btn"); }
+    else { btn.className = "btn intl"; btn.textContent = L("pay_intl_btn"); }
     renderPrices();
   }
 
@@ -165,7 +218,7 @@
     if (providers.alipay) available.push("alipay");
     if (providers.lemonsqueezy) available.push("lemonsqueezy");
     if (available.length === 0) { el("tabs").classList.add("hide"); btn.disabled = true;
-      msg("当前未开通在线支付，请在扩展中使用兑换码激活，或联系客服。"); return; }
+      msg(L("no_online_pay")); return; }
     if (available.length === 1) el("tabs").classList.add("hide");
     var prefer = isMainlandChina() ? "alipay" : "lemonsqueezy";
     if (available.indexOf(prefer) === -1) prefer = available[0];
@@ -191,7 +244,7 @@
     el("qrAmount").textContent = "\u00a5" + (data.amount || "");
     el("qrSubject").textContent = data.subject || "";
     el("qrStatus").className = "qr-status";
-    el("qrStatus").innerHTML = '<span class="spinner"></span>等待支付中…';
+    el("qrStatus").innerHTML = '<span class="spinner"></span>' + L("qr_wait");
     startPolling(data.out_trade_no);
   }
 
@@ -214,7 +267,7 @@
         if (d.ok && d.order && d.order.status === "paid") {
           clearInterval(pollTimer); pollTimer = null;
           var s = el("qrStatus"); s.className = "qr-status paid";
-          s.textContent = "✓ 支付成功！会员已开通，请回扩展刷新。";
+          s.textContent = L("paid_ok");
         }
       } catch (e) { /* 轮询失败忽略，下次再试 */ }
     }, 3000);
@@ -222,7 +275,7 @@
 
   btn.addEventListener("click", async function () {
     if (!token) return;
-    btn.disabled = true; msg("正在创建订单… / Creating order…", true);
+    btn.disabled = true; msg(L("creating"), true);
     try {
       var r = await fetch("/api/order/create", {
         method: "POST",
@@ -230,25 +283,25 @@
         body: JSON.stringify({ plan: selectedPlan, provider: provider })
       });
       var data = await r.json();
-      if (!r.ok) throw new Error(data.error || "下单失败");
+      if (!r.ok) throw new Error(data.error || L("order_failed"));
       if (data.mode === "qr") { showQr(data); return; }       // 支付宝当面付：显示二维码
-      if (data.payUrl) { msg("正在跳转支付… / Redirecting…", true); location.href = data.payUrl; return; }
-      throw new Error("下单返回异常");
+      if (data.payUrl) { msg(L("redirecting"), true); location.href = data.payUrl; return; }
+      throw new Error(L("order_bad"));
     } catch (e) {
-      msg(e.message || "下单失败"); btn.disabled = false;
+      msg(e.message || L("order_failed")); btn.disabled = false;
     }
   });
 
-  (async function init() {
-    if (!token) { msg("缺少登录凭证，请从扩展内的「购买会员」按钮进入本页。"); btn.disabled = true; }
-    try {
-      var r = await fetch("/api/pay/providers");
-      var d = await r.json();
+  (function init() {
+    applyStaticI18n();
+    if (!token) { msg(L("no_token")); btn.disabled = true; }
+    fetch("/api/pay/providers").then(function (r) { return r.json(); }).then(function (d) {
       providers = d.providers || providers;
       plans = d.plans || null;
-    } catch (e) {}
-    applyProviders();
-    renderPrices();
+    }).catch(function () {}).then(function () {
+      applyProviders();
+      renderPrices();
+    });
   })();
 })();
 </script>
