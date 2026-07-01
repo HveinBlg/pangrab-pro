@@ -61,8 +61,7 @@
   function updateBanner() {
     if (maxInfo.reachedMax) {
       bannerEl.hidden = false;
-      bannerEl.innerHTML = "⚠️ 已达检测上限 " + maxInfo.max +
-        " 条。请先勾选收藏需要的链接，再点上方「清空检测」继续向下滚动收集。";
+      bannerEl.textContent = t("popup_banner_max", maxInfo.max);
     } else {
       bannerEl.hidden = true;
     }
@@ -74,7 +73,7 @@
     if (currentLinks.length === 0) {
       var empty = document.createElement("div");
       empty.className = "empty";
-      empty.innerHTML = "当前页面没有检测到网盘链接<br/>可以试试在帖子、资源分享页打开它。";
+      empty.innerHTML = t("popup_empty");
       listEl.appendChild(empty);
       updateFooter();
       return;
@@ -87,11 +86,11 @@
       card.className = "card" + (isSaved ? " saved" : "");
 
       var codeHtml = link.code
-        ? '<span class="code-chip">提取码 ' + escapeHtml(link.code) + "</span>"
-        : '<span class="code-chip none">无提取码</span>';
+        ? '<span class="code-chip">' + t("chip_code", escapeHtml(link.code)) + "</span>"
+        : '<span class="code-chip none">' + t("chip_no_code") + "</span>";
 
       var suspectHtml = (link.suspect || (D.isLikelyTruncated && D.isLikelyTruncated(link.url)))
-        ? '<span class="suspect-chip" title="该链接可能被页面截断、不完整。建议点进去打开真实分享页后再收藏">⚠️ 可能不完整</span>'
+        ? '<span class="suspect-chip" title="' + escapeHtml(t("chip_suspect_title")) + '">' + t("chip_suspect") + "</span>"
         : "";
 
       card.innerHTML =
@@ -101,7 +100,7 @@
             '<span class="badge" style="background:' + link.providerColor + '">' + escapeHtml(link.providerName) + "</span>" +
             codeHtml +
             suspectHtml +
-            (isSaved ? '<span class="saved-tag">✓ 已收藏</span>' : "") +
+            (isSaved ? '<span class="saved-tag">' + t("chip_saved") + "</span>" : "") +
           "</div>" +
           '<div class="url"><a href="' + escapeHtml(link.url) + '" target="_blank" rel="noreferrer">' + escapeHtml(link.url) + "</a></div>" +
         "</div>";
@@ -153,9 +152,9 @@
 
     var pick = r.rotate ? pool[Math.floor(Math.random() * pool.length)] : pool[0];
     recCurrent = pick;
-    document.getElementById("recLabel").textContent = r.label || "资源推荐";
+    document.getElementById("recLabel").textContent = r.label || t("rec_label_default");
     var a = document.getElementById("recLink");
-    a.textContent = pick.title || "点击查看";
+    a.textContent = pick.title || t("rec_view");
     a.href = withUtm(pick.url, "recommend");
     document.getElementById("recRefresh").style.display = pool.length > 1 ? "" : "none";
     el.hidden = false;
@@ -228,7 +227,7 @@
     if (!item || !item.url) { el.hidden = true; return; }
     currentPromoProvider = (P.items[top] && P.items[top].url) ? top : "_default";
     var a = document.getElementById("promoLink");
-    a.textContent = item.text || "网盘会员优惠";
+    a.textContent = item.text || t("promo_default_text");
     a.href = withUtm(item.url, currentPromoProvider);
     el.hidden = false;
   }
@@ -239,7 +238,7 @@
 
   function updateFooter() {
     var n = getCheckedLinks().length;
-    saveBtn.textContent = "收藏选中 (" + n + ")";
+    saveBtn.textContent = t("popup_save_selected", n);
     saveBtn.disabled = n === 0;
     // 同步全选框状态
     var selectable = currentLinks.filter(function (l) { return !savedKeys[l.key]; });
@@ -251,8 +250,8 @@
     if (resp) maxInfo = { reachedMax: !!resp.reachedMax, max: resp.max || 1000 };
     var savedCount = currentLinks.filter(function (l) { return savedKeys[l.key]; }).length;
     summaryEl.textContent = currentLinks.length > 0
-      ? "检测到 " + currentLinks.length + " 个链接" + (savedCount ? "（已收藏 " + savedCount + "）" : "")
-      : "未检测到网盘链接";
+      ? (savedCount ? t("popup_summary_found_saved", currentLinks.length, savedCount) : t("popup_summary_found", currentLinks.length))
+      : t("popup_summary_none");
     updateBanner();
     render();
   }
@@ -267,7 +266,7 @@
 
     if (!activeTabId || /^(chrome|edge|about|chrome-extension):/i.test((tab && tab.url) || "")) {
       applyResp({ links: [] });
-      summaryEl.textContent = "此页面不支持扫描";
+      summaryEl.textContent = t("popup_summary_unsupported");
       return;
     }
 
@@ -297,11 +296,11 @@
     Object.keys(selected).forEach(function (k) { if (savedKeys[k]) delete selected[k]; });
     render();
     if (result.limitReached && result.added === 0) {
-      toast("已达免费上限 " + result.max + " 条，开通 Pro 解锁无限收藏");
+      toast(t("popup_toast_limit_only", result.max));
     } else if (result.limitReached) {
-      toast("已收藏 " + result.added + " 条；其余超出免费上限 " + result.max + " 条");
+      toast(t("popup_toast_limit_partial", result.added, result.max));
     } else {
-      toast("已收藏 " + result.added + " 条" + (result.skipped ? "，跳过 " + result.skipped + " 条" : ""));
+      toast(result.skipped ? t("popup_toast_saved_skipped", result.added, result.skipped) : t("popup_toast_saved", result.added));
     }
   });
 
@@ -316,7 +315,7 @@
   });
 
   document.getElementById("rescan").addEventListener("click", function () {
-    summaryEl.textContent = "正在重新扫描…";
+    summaryEl.textContent = t("popup_summary_rescanning");
     init();
   });
 
@@ -324,7 +323,7 @@
     if (!activeTabId) return;
     await sendToTab(activeTabId, { type: "RESET_PAGE_LINKS" });
     selected = {};
-    toast("已清空本页检测，可继续向下滚动收集");
+    toast(t("popup_toast_reset"));
     init();
   });
 

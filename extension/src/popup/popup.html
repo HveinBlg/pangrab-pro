@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en" data-i18n-doctitle="actionTitle">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="popup.css" />
-  <title>PanGrab 网盘抓手</title>
+  <title>PanGrab</title>
 </head>
 <body>
   <header class="pop-header">
     <div class="brand">
-      <span class="brand-name">PanGrab 抓手</span>
+      <span class="brand-name" data-i18n="popup_brand">PanGrab</span>
     </div>
     <div class="header-btns">
-      <button id="followBtn" class="link-btn" title="更多资源 · 关注频道" hidden>📢 频道</button>
-      <button id="openManager" class="link-btn" title="打开收藏管理">管理 ▸</button>
+      <button id="followBtn" class="link-btn" data-i18n="popup_follow" data-i18n-title="popup_follow_title" hidden>📢 Channel</button>
+      <button id="openManager" class="link-btn" data-i18n="popup_manage" data-i18n-title="popup_manage_title">Manage ▸</button>
     </div>
   </header>
 
   <div class="toolbar">
-    <span id="summary" class="summary">正在扫描当前页…</span>
+    <span id="summary" class="summary" data-i18n="popup_scanning">Scanning current page…</span>
     <div class="toolbar-btns">
-      <button id="rescan" class="ghost-btn" title="重新扫描当前页">↻ 重扫</button>
-      <button id="resetScan" class="ghost-btn" title="清空本页已检测的链接，重新开始累积">清空检测</button>
+      <button id="rescan" class="ghost-btn" data-i18n="popup_rescan" data-i18n-title="popup_rescan_title">↻ Rescan</button>
+      <button id="resetScan" class="ghost-btn" data-i18n="popup_reset" data-i18n-title="popup_reset_title">Clear scan</button>
     </div>
   </div>
 
@@ -33,25 +33,26 @@
 
   <footer class="pop-footer">
     <label class="select-all">
-      <input type="checkbox" id="selectAll" /> 全选
+      <input type="checkbox" id="selectAll" /> <span data-i18n="popup_select_all">Select all</span>
     </label>
-    <button id="saveSelected" class="primary-btn" disabled>收藏选中 (0)</button>
+    <button id="saveSelected" class="primary-btn" disabled>Save selected (0)</button>
   </footer>
 
   <div id="recommend" class="recommend" hidden>
     <span id="recLabel" class="rec-label"></span>
     <a id="recLink" class="rec-link" target="_blank" rel="noreferrer"></a>
-    <button id="recRefresh" class="rec-refresh" title="换一个">⟳</button>
+    <button id="recRefresh" class="rec-refresh" data-i18n-title="popup_rec_refresh_title">⟳</button>
   </div>
 
   <div id="promo" class="promo" hidden>
-    <span class="promo-tag">推广</span>
+    <span class="promo-tag" data-i18n="popup_promo_tag">Ad</span>
     <a id="promoLink" class="promo-link" target="_blank" rel="noreferrer"></a>
-    <button id="promoClose" class="promo-close" title="不再显示">✕</button>
+    <button id="promoClose" class="promo-close" data-i18n-title="popup_promo_close_title">✕</button>
   </div>
 
   <div id="toast" class="toast"></div>
 
+  <script src="../i18n.js"></script>
   <script src="../detector.js"></script>
   <script src="../promos.js"></script>
   <script src="popup.js"></script>
