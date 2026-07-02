@@ -167,9 +167,14 @@
     container.innerHTML = ddInner(value, options, placeholder);
   }
   function cardCatDD(current, key) {
+    var cats = allCategories();
     var options = [{ value: "未分类", label: t("cat_uncategorized") }]
-      .concat(allCategories().map(function (c) { return { value: c, label: c }; }))
-      .concat([{ value: "__new__", label: t("cat_new") }]);
+      .concat(cats.map(function (c) { return { value: c, label: c }; }));
+    // 当前分类若是被隐藏的番号(不在列表里)，仍作为"当前项"加入，避免误显示成"未分类"；但不列出其它番号
+    if (current && current !== "未分类" && cats.indexOf(current) === -1) {
+      options.push({ value: current, label: current });
+    }
+    options.push({ value: "__new__", label: t("cat_new") });
     return '<div class="dd dd-cat" data-role="cat" data-key="' + escapeHtml(key) + '" data-value="' + escapeHtml(current) + '" tabindex="0">' +
       ddInner(current, options, t("cat_uncategorized")) + "</div>";
   }
@@ -283,10 +288,17 @@
       chrome.storage.local.set({ categories: customCategories }, function () { resolve(); });
     });
   }
+  // 番号自动分类（如 HMN-208）：不在普通分类下拉/筛选里显示，避免番号一多就刷屏；它们在「番号库」页面查看
+  function isCodeCategory(c) { return /^[A-Za-z]{2,6}-\d{2,5}$/.test(c || ""); }
   function allCategories() {
     var set = {};
     customCategories.forEach(function (c) { if (c && c !== "未分类") set[c] = true; });
-    all.forEach(function (l) { if (l.category && l.category !== "未分类") set[l.category] = true; });
+    all.forEach(function (l) {
+      if (!l.category || l.category === "未分类") return;
+      // 跳过"番号格式且不是用户手动创建"的自动分类
+      if (isCodeCategory(l.category) && customCategories.indexOf(l.category) === -1) return;
+      set[l.category] = true;
+    });
     return Object.keys(set).sort(function (a, b) { return a.localeCompare(b, "zh"); });
   }
   function addCategory(name) {
