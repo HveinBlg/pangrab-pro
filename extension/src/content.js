@@ -76,6 +76,21 @@
     return parts.join("  ").slice(0, 500);
   }
 
+  // 读取页面标准元信息(Open Graph / Twitter Card 等)——通用，不针对任何站点。
+  // 用于给保存的链接附上封面图与简介。每次 scan 刷新一次。
+  var pageMetaCache = { image: "", desc: "" };
+  function metaContent(sel) {
+    var el = document.querySelector(sel);
+    return el ? (el.getAttribute("content") || "").trim() : "";
+  }
+  function pageMeta() {
+    var image = metaContent('meta[property="og:image"]') || metaContent('meta[name="twitter:image"]') || metaContent('meta[itemprop="image"]');
+    var desc = metaContent('meta[property="og:description"]') || metaContent('meta[name="description"]') || metaContent('meta[name="twitter:description"]');
+    if (image && !/^https?:\/\//i.test(image)) { try { image = new URL(image, location.href).href; } catch (e) { /* ignore */ } }
+    if (desc && desc.length > 300) desc = desc.slice(0, 300);
+    return { image: image || "", desc: desc || "" };
+  }
+
   function addLink(provider, rawUrl, codeContext, title, suspect) {
     var url = D.normalizeUrl(rawUrl);
     if (!url) return;
@@ -86,6 +101,11 @@
       // 已存在，补全提取码 / 标题；若新来源更可信(非截断)则清除疑似标记
       if (!seenLinks[key].code && code) seenLinks[key].code = code;
       if (seenLinks[key].suspect && !sus) seenLinks[key].suspect = false;
+      // 磁链：页面元信息可能异步加载，补全封面/简介
+      if (provider.id === "magnet") {
+        if (!seenLinks[key].cover && pageMetaCache.image) seenLinks[key].cover = pageMetaCache.image;
+        if (!seenLinks[key].desc && pageMetaCache.desc) seenLinks[key].desc = pageMetaCache.desc;
+      }
       return;
     }
     // 达到上限后不再新增（已有的仍保留），并打标记提醒用户先保存
@@ -102,6 +122,8 @@
       code: code || "",
       title: title || D.guessTitle("", url, provider),
       suspect: sus,
+      cover: provider.id === "magnet" ? pageMetaCache.image : "",
+      desc: provider.id === "magnet" ? pageMetaCache.desc : "",
       sourceUrl: location.href,
       sourceTitle: document.title || "",
       foundAt: Date.now()
@@ -113,6 +135,7 @@
    * 注意：不清空 seenLinks，保证滚动过程中已发现的链接不丢失。
    */
   function scan() {
+    pageMetaCache = pageMeta(); // 每次扫描刷新页面封面/简介（页面可能异步加载）
     // 1) 锚点链接：从 href / title / aria-label 等多个来源找完整分享链接。
     //    推特等会把链接显示文字截断（如 .../s/1imuAdX_COuZ…），但完整链接常在这些属性里。
     var anchors = document.querySelectorAll("a[href]");

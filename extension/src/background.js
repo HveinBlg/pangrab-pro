@@ -10,6 +10,8 @@ importScripts("detector.js", "pro-config.js", "pro-state.js");
 var D = self.NetdiskDetector;
 var PRO = self.PanGrabPro;
 var STORE_KEY = "savedLinks";
+// 磁链自动归入的固定分类（一键打包在同一类别下）
+var MAGNET_CATEGORY = "磁力链接";
 
 /* ----------------------------- 角标管理 ----------------------------- */
 
@@ -42,8 +44,10 @@ function setSaved(list) {
 
 /**
  * 保存一批链接，自动按 key 去重。
- * 免费版收藏上限 FREE_MAX_LINKS，超出不再写入并返回 limitReached。
- * 返回 { added, skipped, total, limitReached, max, is_pro }
+ * - 免费版收藏上限 FREE_MAX_LINKS，超出不再写入并返回 limitReached。
+ * - 磁力链接为 Pro 会员专属：非会员的磁链不保存，计入 proBlocked。
+ * - 磁力链接自动归入固定分类 MAGNET_CATEGORY。
+ * 返回 { added, skipped, total, limitReached, proBlocked, max, is_pro }
  */
 async function saveLinks(links) {
   var saved = await getSaved();
@@ -53,12 +57,15 @@ async function saveLinks(links) {
   var isPro = await PRO.isProNow();
   var MAX = PRO.LIMITS.FREE_MAX_LINKS;
 
-  var added = 0, skipped = 0, limitReached = false;
+  var added = 0, skipped = 0, limitReached = false, proBlocked = 0;
   links.forEach(function (l) {
     if (!l || !l.key) return;
     if (index[l.key]) { skipped++; return; }
+    // 磁力链接抓取是 Pro 会员专属功能：非会员不保存
+    if (l.providerId === "magnet" && !isPro) { proBlocked++; return; }
     // 免费版：达到上限后不再写入
     if (!isPro && saved.length >= MAX) { limitReached = true; return; }
+    var isMagnet = l.providerId === "magnet";
     index[l.key] = true;
     saved.push({
       key: l.key,
@@ -70,9 +77,12 @@ async function saveLinks(links) {
       title: l.title || l.sourceTitle || "",
       sourceUrl: l.sourceUrl || "",
       sourceTitle: l.sourceTitle || "",
-      category: l.category || "未分类",
+      // 磁链自动归入固定分类，实现"自动打包在同一类别下"
+      category: isMagnet ? MAGNET_CATEGORY : (l.category || "未分类"),
       tags: l.tags || [],
       note: l.note || "",
+      cover: l.cover || "",     // 封面图（og:image）
+      desc: l.desc || "",       // 简介（og:description）
       suspect: !!l.suspect,
       savedAt: Date.now()
     });
@@ -80,7 +90,7 @@ async function saveLinks(links) {
   });
 
   await setSaved(saved);
-  return { added: added, skipped: skipped, total: saved.length, limitReached: limitReached, max: MAX, is_pro: isPro };
+  return { added: added, skipped: skipped, total: saved.length, limitReached: limitReached, proBlocked: proBlocked, max: MAX, is_pro: isPro };
 }
 
 /* ------------------------------ 消息处理 ----------------------------- */
@@ -199,6 +209,10 @@ chrome.contextMenus.onClicked.addListener(async function (info, tab) {
   }
 
   var result = await saveLinks(links);
+  if (result.proBlocked && result.added === 0) {
+    notify(chrome.i18n.getMessage("bg_magnet_title"), chrome.i18n.getMessage("magnet_pro_only"));
+    return;
+  }
   if (result.limitReached && result.added === 0) {
     notify(chrome.i18n.getMessage("bg_limit_title"), chrome.i18n.getMessage("bg_limit_msg", [String(result.max)]));
     return;

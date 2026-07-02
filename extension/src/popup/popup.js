@@ -295,7 +295,9 @@
     if (savedResp && savedResp.links) savedResp.links.forEach(function (l) { savedKeys[l.key] = true; });
     Object.keys(selected).forEach(function (k) { if (savedKeys[k]) delete selected[k]; });
     render();
-    if (result.limitReached && result.added === 0) {
+    if (result.proBlocked && result.added === 0) {
+      toast(t("magnet_pro_only"));
+    } else if (result.limitReached && result.added === 0) {
       toast(t("popup_toast_limit_only", result.max));
     } else if (result.limitReached) {
       toast(t("popup_toast_limit_partial", result.added, result.max));

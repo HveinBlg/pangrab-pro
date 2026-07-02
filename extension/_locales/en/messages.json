@@ -228,5 +228,7 @@
   "reason_dead_page": { "message": "Page indicates the share is unavailable" },
   "reason_timeout": { "message": "Timeout" },
   "reason_failed": { "message": "Request failed" },
-  "reason_not_http": { "message": "Magnet / non-HTTP link, cannot be checked" }
+  "reason_not_http": { "message": "Magnet / non-HTTP link, cannot be checked" },
+  "magnet_pro_only": { "message": "Magnet link grabbing is a Pro feature. Please upgrade to use it." },
+  "bg_magnet_title": { "message": "Magnet requires Pro" }
 }

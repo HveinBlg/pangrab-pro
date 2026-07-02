@@ -228,5 +228,7 @@
   "reason_dead_page": { "message": "\u9875\u9762\u63d0\u793a\u5931\u6548" },
   "reason_timeout": { "message": "\u8d85\u65f6" },
   "reason_failed": { "message": "\u8bf7\u6c42\u5931\u8d25" },
-  "reason_not_http": { "message": "\u78c1\u94fe/\u975eHTTP\u94fe\u63a5\uff0c\u65e0\u6cd5\u68c0\u6d4b" }
+  "reason_not_http": { "message": "\u78c1\u94fe/\u975eHTTP\u94fe\u63a5\uff0c\u65e0\u6cd5\u68c0\u6d4b" },
+  "magnet_pro_only": { "message": "\u78c1\u529b\u94fe\u63a5\u6293\u53d6\u662f Pro \u4f1a\u5458\u529f\u80fd\uff0c\u8bf7\u5f00\u901a\u540e\u4f7f\u7528\u3002" },
+  "bg_magnet_title": { "message": "\u78c1\u529b\u94fe\u63a5\u9700 Pro \u4f1a\u5458" }
 }
