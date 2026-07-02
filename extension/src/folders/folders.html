@@ -27,9 +27,9 @@
   .folder .code { font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .folder .cnt { font-size:12px; color:var(--mut); margin-top:2px; }
 
-  /* 详情：番号下的磁链列表 */
-  .links { display:flex; flex-direction:column; gap:12px; }
-  .link-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; gap:14px; }
+  /* 详情：番号下的磁链列表（自适应多列，避免整行超宽右侧留白） */
+  .links { display:grid; grid-template-columns:repeat(auto-fill,minmax(440px,1fr)); gap:14px; }
+  .link-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; gap:16px; }
   .link-card .lc-cover { width:160px; height:100px; flex:0 0 auto; border-radius:8px; object-fit:cover; object-position:center; background:#eef1f6; border:1px solid var(--line); }
   .link-card .lc-body { flex:1; min-width:0; }
   .link-card .lc-title { font-weight:600; margin-bottom:6px; word-break:break-all; }
