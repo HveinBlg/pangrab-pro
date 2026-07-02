@@ -113,13 +113,13 @@
     if (s.length > 80) s = s.slice(0, 80).trim(); // 精简，只留主要内容
     return s;
   }
-  // 磁链简介：优先从文件名(dn)解析出「番号」，否则退回就近短文字
+  // 磁链简介：优先从文件名(dn)解析出「番号」（统一为 字母-数字），否则退回就近短文字
   function magnetDesc(url, ctx) {
     var dn = "";
     var m = /[?&]dn=([^&]+)/i.exec(url || "");
     if (m) { try { dn = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { dn = m[1]; } }
-    var code = (dn.match(/[A-Za-z]{2,6}-\d{2,5}/) || dn.match(/[A-Za-z]{2,6}\d{2,5}/) || [])[0] || "";
-    if (code) return "番号：" + code.toUpperCase();
+    var mm = dn.match(/([A-Za-z]{2,6})-?(\d{2,5})/);
+    if (mm) return "番号：" + (mm[1] + "-" + mm[2]).toUpperCase();
     return cleanNearby(ctx);
   }
 

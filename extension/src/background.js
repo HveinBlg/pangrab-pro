@@ -13,14 +13,15 @@ var STORE_KEY = "savedLinks";
 // 磁链没有番号时归入的兜底分类
 var MAGNET_CATEGORY = "磁力链接";
 
-// 从磁链的文件名(dn)解析「番号」，作为分组文件夹名。解析不到返回空。
+// 从磁链的文件名(dn)解析「番号」，作为分组文件夹名。统一规范为 字母-数字（如 HMN-208）。
+// 无论文件名里是 "HMN-208" 还是 "HMN208"，都归一化成同一个，避免同番号分裂成两个文件夹。
 function magnetCode(url) {
   if (!url || !/^magnet:/i.test(url)) return "";
   var dn = "";
   var m = /[?&]dn=([^&]+)/i.exec(url);
   if (m) { try { dn = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { dn = m[1]; } }
-  var code = (dn.match(/[A-Za-z]{2,6}-\d{2,5}/) || dn.match(/[A-Za-z]{2,6}\d{2,5}/) || [])[0] || "";
-  return code ? code.toUpperCase() : "";
+  var mm = dn.match(/([A-Za-z]{2,6})-?(\d{2,5})/);
+  return mm ? (mm[1] + "-" + mm[2]).toUpperCase() : "";
 }
 
 /* ----------------------------- 角标管理 ----------------------------- */
