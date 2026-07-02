@@ -110,8 +110,17 @@
       .replace(/https?:\/\/\S+/gi, " ")          // 去普通链接
       .replace(/\s+/g, " ")
       .trim();
-    if (s.length > 200) s = s.slice(0, 200).trim();
+    if (s.length > 80) s = s.slice(0, 80).trim(); // 精简，只留主要内容
     return s;
+  }
+  // 磁链简介：优先从文件名(dn)解析出「番号」，否则退回就近短文字
+  function magnetDesc(url, ctx) {
+    var dn = "";
+    var m = /[?&]dn=([^&]+)/i.exec(url || "");
+    if (m) { try { dn = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { dn = m[1]; } }
+    var code = (dn.match(/[A-Za-z]{2,6}-\d{2,5}/) || dn.match(/[A-Za-z]{2,6}\d{2,5}/) || [])[0] || "";
+    if (code) return "番号：" + code.toUpperCase();
+    return cleanNearby(ctx);
   }
 
   function addLink(provider, rawUrl, codeContext, title, suspect) {
@@ -124,10 +133,10 @@
       // 补全提取码 / 标题；若新来源更可信(非截断)则清除疑似标记
       if (!seenLinks[key].code && code) seenLinks[key].code = code;
       if (seenLinks[key].suspect && !sus) seenLinks[key].suspect = false;
-      // 封面/简介：页面元信息可能异步加载，补全（对所有链接生效）
+      // 封面/简介：页面元信息可能异步加载，补全
       if (!seenLinks[key].cover && pageMetaCache.image) seenLinks[key].cover = pageMetaCache.image;
-      if (!seenLinks[key].desc) {
-        var d2 = pageMetaCache.desc || cleanNearby(codeContext);
+      if (provider.id === "magnet" && !seenLinks[key].desc) {
+        var d2 = magnetDesc(url, codeContext);
         if (d2) seenLinks[key].desc = d2;
       }
       return;
@@ -147,7 +156,7 @@
       title: title || D.guessTitle("", url, provider),
       suspect: sus,
       cover: pageMetaCache.image || "",
-      desc: pageMetaCache.desc || cleanNearby(codeContext) || "",
+      desc: provider.id === "magnet" ? magnetDesc(url, codeContext) : "",
       sourceUrl: location.href,
       sourceTitle: document.title || "",
       foundAt: Date.now()

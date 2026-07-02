@@ -342,7 +342,7 @@
     text = text.replace(TITLE_NOISE, " ");
     text = text.replace(/[【】\[\]|｜<>]+/g, " ");
     text = text.replace(/\s+/g, " ").trim();
-    if (text.length > 60) text = text.slice(0, 60).trim();
+    if (text.length > 40) text = text.slice(0, 40).trim();
     // 去掉首尾的分隔符/标点
     text = text.replace(/^[\s_\-|·,，、:：.]+|[\s_\-|·,，、:：]+$/g, "").trim();
     return text;

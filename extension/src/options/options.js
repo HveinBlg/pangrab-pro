@@ -369,6 +369,8 @@
         ? '<div class="item-title">' + escapeHtml(dispTitle) + "</div>"
         : '<div class="item-title placeholder">' + t("item_untitled") + "</div>";
       var codeHtml = l.code ? '<span class="code-chip">' + t("chip_code", escapeHtml(l.code)) + "</span>" : "";
+      // 简介仅磁链显示（网盘取不到有意义的简介，只保留封面图）
+      var showDesc = !!l.desc && l.providerId === "magnet";
       var isSus = l.suspect || D.isLikelyTruncated(l.url);
       var suspectHtml = isSus
         ? '<span class="suspect-chip" title="' + escapeHtml(t("chip_suspect_title")) + '">' + t("chip_suspect") + "</span>"
@@ -383,16 +385,15 @@
           '<input type="checkbox" class="item-check"' + (selectedKeys[l.key] ? " checked" : "") + " />" +
           '<span class="badge" style="background:' + l.providerColor + '">' + escapeHtml(l.providerName) + "</span>" +
           cardCatDD(l.category || "未分类", l.key) +
-          codeHtml +
           suspectHtml +
           liveHtml +
         "</div>" +
         titleHtml +
-        '<div class="item-url"><a href="' + escapeHtml(l.url) + '" target="_blank" rel="noreferrer">' + escapeHtml(l.url) + "</a></div>" +
-        ((l.cover || l.desc) ?
+        '<div class="item-url"><a href="' + escapeHtml(l.url) + '" target="_blank" rel="noreferrer">' + escapeHtml(l.url) + "</a>" + codeHtml + "</div>" +
+        ((l.cover || showDesc) ?
           '<div class="item-main">' +
             (l.cover ? '<div class="item-cover"><img loading="lazy" referrerpolicy="no-referrer" src="' + escapeHtml(l.cover) + '" alt="" /></div>' : "") +
-            (l.desc ? '<div class="item-desc">' + escapeHtml(l.desc) + "</div>" : "") +
+            (showDesc ? '<div class="item-desc">' + escapeHtml(l.desc) + "</div>" : "") +
           "</div>" : "") +
         (tags ? '<div class="tags">' + tags + "</div>" : "") +
         (l.note ? '<div class="note">' + escapeHtml(l.note) + "</div>" : "") +
