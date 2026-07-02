@@ -230,5 +230,11 @@
   "reason_failed": { "message": "Request failed" },
   "reason_not_http": { "message": "Magnet / non-HTTP link, cannot be checked" },
   "magnet_pro_only": { "message": "Magnet link grabbing is a Pro feature. Please upgrade to use it." },
-  "bg_magnet_title": { "message": "Magnet requires Pro" }
+  "bg_magnet_title": { "message": "Magnet requires Pro" },
+  "opt_code_library": { "message": "\uD83D\uDCC1 Code Library" },
+  "folders_title": { "message": "Code Library" },
+  "folders_search_ph": { "message": "Search code\u2026" },
+  "folders_back": { "message": "\u2190 Back to codes" },
+  "folders_empty": { "message": "No magnet codes yet. Saved magnet links are auto-filed here by code." },
+  "folders_count": { "message": "$1 items" }
 }

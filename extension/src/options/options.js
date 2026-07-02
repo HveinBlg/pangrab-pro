@@ -540,6 +540,11 @@
     }
   });
 
+  var codeLibBtn = document.getElementById("codeLibrary");
+  if (codeLibBtn) codeLibBtn.addEventListener("click", function () {
+    window.open(chrome.runtime.getURL("src/folders/folders.html"), "_blank");
+  });
+
   document.getElementById("newCategory").addEventListener("click", function () {
     ensureCanAddCategory().then(function (allow) {
       if (!allow) return;

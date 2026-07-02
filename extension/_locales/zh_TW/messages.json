@@ -230,5 +230,11 @@
   "reason_failed": { "message": "\u8acb\u6c42\u5931\u6557" },
   "reason_not_http": { "message": "\u78c1\u529b/\u975eHTTP\u9023\u7d50\uff0c\u7121\u6cd5\u6aa2\u6e2c" },
   "magnet_pro_only": { "message": "\u78c1\u529b\u9023\u7d50\u6293\u53d6\u662f Pro \u6703\u54e1\u529f\u80fd\uff0c\u8acb\u958b\u901a\u5f8c\u4f7f\u7528\u3002" },
-  "bg_magnet_title": { "message": "\u78c1\u529b\u9023\u7d50\u9700 Pro \u6703\u54e1" }
+  "bg_magnet_title": { "message": "\u78c1\u529b\u9023\u7d50\u9700 Pro \u6703\u54e1" },
+  "opt_code_library": { "message": "\uD83D\uDCC1 \u756a\u865f\u5eab" },
+  "folders_title": { "message": "\u756a\u865f\u5eab" },
+  "folders_search_ph": { "message": "\u641c\u5c0b\u756a\u865f\u2026" },
+  "folders_back": { "message": "\u2190 \u8fd4\u56de\u756a\u865f\u5eab" },
+  "folders_empty": { "message": "\u9084\u6c92\u6709\u78c1\u529b\u756a\u865f\u3002\u6536\u85cf\u78c1\u529b\u9023\u7d50\u5f8c\u6703\u81ea\u52d5\u6309\u756a\u865f\u6b78\u6a94\u5230\u9019\u88e1\u3002" },
+  "folders_count": { "message": "$1 \u689d" }
 }

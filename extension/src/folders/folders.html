@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" data-i18n-doctitle="folders_title">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Code Library</title>
+<style>
+  :root { --pri:#3d7fff; --bg:#f4f6fb; --ink:#1f2733; --mut:#7a869a; --line:#e6eaf2; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--ink); }
+  .top { background: linear-gradient(120deg,#2f6bff,#5b8cff); color:#fff; padding:16px 24px; display:flex; align-items:center; gap:14px; }
+  .top h1 { font-size:18px; font-weight:700; }
+  .top .spacer { flex:1; }
+  .top input { padding:8px 12px; border:none; border-radius:9px; font-size:13px; min-width:220px; background:rgba(255,255,255,.92); }
+  .wrap { max-width:1080px; margin:22px auto; padding:0 20px; }
+
+  .back { display:inline-flex; align-items:center; gap:6px; color:var(--pri); cursor:pointer; font-size:14px; margin-bottom:14px; font-weight:600; }
+  .crumb { font-size:13px; color:var(--mut); margin-bottom:14px; }
+
+  /* 文件夹网格 */
+  .folders { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:16px; }
+  .folder { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; transition:.15s; }
+  .folder:hover { border-color:#b9cdfb; box-shadow:0 8px 22px rgba(40,80,180,.12); transform:translateY(-2px); }
+  .folder .thumb { width:100%; aspect-ratio:3/4; object-fit:cover; background:#eef1f6; display:block; }
+  .folder .thumb.ph { display:flex; align-items:center; justify-content:center; font-size:34px; color:#c3ccdb; }
+  .folder .meta { padding:10px 12px; }
+  .folder .code { font-weight:700; font-size:14px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .folder .cnt { font-size:12px; color:var(--mut); margin-top:2px; }
+
+  /* 详情：番号下的磁链列表 */
+  .links { display:flex; flex-direction:column; gap:12px; }
+  .link-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; gap:14px; }
+  .link-card .lc-cover { width:120px; height:120px; flex:0 0 auto; border-radius:8px; object-fit:cover; background:#eef1f6; border:1px solid var(--line); }
+  .link-card .lc-body { flex:1; min-width:0; }
+  .link-card .lc-title { font-weight:600; margin-bottom:6px; word-break:break-all; }
+  .link-card .lc-url { font-size:12px; color:#46506180; font-family:ui-monospace,Menlo,Consolas,monospace; word-break:break-all; margin-bottom:8px; }
+  .link-card .lc-url a { color:#5a6678; }
+  .btn { padding:7px 14px; border:none; border-radius:8px; background:var(--pri); color:#fff; cursor:pointer; font-size:13px; }
+  .btn.ghost { background:#f3f5fa; color:var(--ink); border:1px solid var(--line); }
+  .empty { text-align:center; color:var(--mut); padding:70px 20px; }
+  .empty .emo { font-size:46px; margin-bottom:12px; }
+  .hide { display:none !important; }
+  .toast { position:fixed; left:50%; bottom:28px; transform:translateX(-50%); background:#1f2733; color:#fff; padding:9px 16px; border-radius:9px; font-size:13px; opacity:0; transition:.2s; pointer-events:none; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1 data-i18n="folders_title">Code Library</h1>
+    <span class="spacer"></span>
+    <input id="search" data-i18n-ph="folders_search_ph" placeholder="Search code…" />
+  </div>
+
+  <div class="wrap">
+    <div id="crumb" class="crumb"></div>
+    <div id="foldersView">
+      <div id="folders" class="folders"></div>
+      <div id="foldersEmpty" class="empty hide"><div class="emo">📁</div><div data-i18n="folders_empty"></div></div>
+    </div>
+    <div id="detailView" class="hide">
+      <span class="back" id="backBtn" data-i18n="folders_back">← Back to codes</span>
+      <div id="links" class="links"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="../i18n.js"></script>
+  <script src="folders.js"></script>
+</body>
+</html>
