@@ -227,5 +227,6 @@
   "reason_empty": { "message": "\u7a7a\u9023\u7d50" },
   "reason_dead_page": { "message": "\u9801\u9762\u63d0\u793a\u5931\u6548" },
   "reason_timeout": { "message": "\u903e\u6642" },
-  "reason_failed": { "message": "\u8acb\u6c42\u5931\u6557" }
+  "reason_failed": { "message": "\u8acb\u6c42\u5931\u6557" },
+  "reason_not_http": { "message": "\u78c1\u529b/\u975eHTTP\u9023\u7d50\uff0c\u7121\u6cd5\u6aa2\u6e2c" }
 }

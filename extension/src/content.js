@@ -214,6 +214,7 @@
     for (var i = 0; i < keys.length; i++) {
       var a = seenLinks[keys[i]];
       if (!a) continue;
+      if (a.providerId === "magnet") continue; // 磁链已按 btih 哈希去重，跳过前缀比对
       var ua = stripForCompare(a.url);
       for (var j = 0; j < keys.length; j++) {
         if (i === j) continue;

@@ -227,5 +227,6 @@
   "reason_empty": { "message": "Empty link" },
   "reason_dead_page": { "message": "Page indicates the share is unavailable" },
   "reason_timeout": { "message": "Timeout" },
-  "reason_failed": { "message": "Request failed" }
+  "reason_failed": { "message": "Request failed" },
+  "reason_not_http": { "message": "Magnet / non-HTTP link, cannot be checked" }
 }

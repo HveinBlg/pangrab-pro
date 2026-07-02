@@ -129,6 +129,7 @@ var DEAD_KEYWORDS = /(来晚了)|(分享|文件|链接|页面|资源|内容)\s*.
 
 async function checkLink(url) {
   if (!url) return { state: "unknown", reason: chrome.i18n.getMessage("reason_empty") };
+  if (!/^https?:\/\//i.test(url)) return { state: "unknown", reason: chrome.i18n.getMessage("reason_not_http") };
   var ctrl = new AbortController();
   var timer = setTimeout(function () { ctrl.abort(); }, 12000);
   try {

@@ -10,6 +10,7 @@
 
 ### 链接识别与收藏
 - **自动识别 27 家网盘**分享链接：百度、阿里、夸克、迅雷、115、天翼、123、UC、城通、微云、蓝奏、移动云，以及 MEGA、Google Drive、Dropbox、OneDrive、TeraBox、MediaFire、Box、pCloud、WeTransfer、Yandex、Proton Drive、iCloud、Gofile、4shared、1fichier
+- **磁力链接（magnet）识别**：自动抓取页面里的 `magnet:` 链接，名称取自 `dn` 字段，按 btih 哈希去重，可一键复制到迅雷/qBittorrent 等下载工具
 - **自动抓取提取码**（标签式 `提取码:xxxx` 与 URL 内嵌 `?pwd=xxxx`）
 - **累积式扫描**：支持推特/微博等虚拟滚动页面，滑出屏幕的链接不丢失
 - 页面角标显示当前页链接数；右键菜单「收藏此网盘链接」

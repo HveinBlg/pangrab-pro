@@ -205,6 +205,14 @@
       color: "#d32f2f",
       hosts: ["1fichier.com"],
       urlPattern: /(?:https?:\/\/)?(?:www\.)?1fichier\.com\/\?[\w-]+/gi
+    },
+    {
+      id: "magnet",
+      name: "磁力链接",
+      color: "#8e44ad",
+      hosts: ["magnet:"],
+      // 磁链：magnet:?xt=urn:btih:<40位十六进制或32位base32>&dn=名称&tr=tracker...
+      urlPattern: /magnet:\?xt=urn:btih:[0-9a-zA-Z]{20,50}[^\s"'<>）)，,；;]*/gi
     }
   ];
 
@@ -268,10 +276,23 @@
    */
   function shareId(url) {
     if (!url) return "";
+    if (/^magnet:/i.test(url)) return magnetHash(url);
     var m = url.match(/\/(?:s|t|f|fs|file|share|folder)\/([\w-]+)/i);
     if (m) return m[1];
     var m2 = url.replace(/[#?].*$/, "").match(/\/([\w-]{4,})\/?$/);
     return m2 ? m2[1] : "";
+  }
+
+  // 磁链：取 btih 哈希（作为唯一标识，同一资源不同 tracker/名称视为同一条）
+  function magnetHash(url) {
+    var m = /xt=urn:btih:([0-9a-zA-Z]+)/i.exec(url || "");
+    return m ? m[1].toLowerCase() : "";
+  }
+  // 磁链：取显示名 dn（做资源标题）
+  function magnetName(url) {
+    var m = /[?&]dn=([^&]+)/i.exec(url || "");
+    if (!m) return "";
+    try { return decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { return m[1]; }
   }
 
   // 各网盘分享 ID 的最短合理长度。短于此值多半是被页面（如 X/推特）截断的残缺链接。
@@ -339,6 +360,11 @@
    * 找不到合适的就回退到「网盘名 + 分享ID」。
    */
   function guessTitle(context, url, provider) {
+    // 磁链优先用链接里的 dn（显示名）做标题
+    if (provider && provider.id === "magnet") {
+      var dn = magnetName(url);
+      if (isMeaningfulTitle(dn)) return dn;
+    }
     var t = cleanTitle(context, url);
     if (isMeaningfulTitle(t)) return t;
     var id = shareId(url);
@@ -384,6 +410,8 @@
    */
   function normalizeUrl(url) {
     if (!url) return url;
+    // 磁链：不补协议头、不裁剪（tracker 参数里可能含各种字符），仅去首尾空白
+    if (/^magnet:/i.test(url)) return url.trim();
     var u = url.trim().replace(/[）)，,。；;、"'<>]+$/, "");
     if (u && !/^https?:\/\//i.test(u)) {
       u = "https://" + u;
@@ -393,8 +421,10 @@
 
   /**
    * 生成稳定去重 key：网盘 + 链接（去掉协议差异）。
+   * 磁链按 btih 哈希去重（同一资源不同 tracker/名称算同一条）。
    */
   function dedupeKey(provider, url) {
+    if (provider && provider.id === "magnet") return "magnet::" + magnetHash(url);
     var u = (url || "").replace(/^https?:\/\//i, "").replace(/\/$/, "");
     return (provider ? provider.id : "unknown") + "::" + u.toLowerCase();
   }
