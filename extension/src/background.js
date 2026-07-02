@@ -10,8 +10,18 @@ importScripts("detector.js", "pro-config.js", "pro-state.js");
 var D = self.NetdiskDetector;
 var PRO = self.PanGrabPro;
 var STORE_KEY = "savedLinks";
-// 磁链自动归入的固定分类（一键打包在同一类别下）
+// 磁链没有番号时归入的兜底分类
 var MAGNET_CATEGORY = "磁力链接";
+
+// 从磁链的文件名(dn)解析「番号」，作为分组文件夹名。解析不到返回空。
+function magnetCode(url) {
+  if (!url || !/^magnet:/i.test(url)) return "";
+  var dn = "";
+  var m = /[?&]dn=([^&]+)/i.exec(url);
+  if (m) { try { dn = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { dn = m[1]; } }
+  var code = (dn.match(/[A-Za-z]{2,6}-\d{2,5}/) || dn.match(/[A-Za-z]{2,6}\d{2,5}/) || [])[0] || "";
+  return code ? code.toUpperCase() : "";
+}
 
 /* ----------------------------- 角标管理 ----------------------------- */
 
@@ -77,8 +87,8 @@ async function saveLinks(links) {
       title: l.title || l.sourceTitle || "",
       sourceUrl: l.sourceUrl || "",
       sourceTitle: l.sourceTitle || "",
-      // 磁链自动归入固定分类，实现"自动打包在同一类别下"
-      category: isMagnet ? MAGNET_CATEGORY : (l.category || "未分类"),
+      // 磁链按「番号」自动归类（同一番号的多个磁链聚到同一分类/文件夹）；无番号则归入兜底分类
+      category: isMagnet ? (magnetCode(l.url) || MAGNET_CATEGORY) : (l.category || "未分类"),
       tags: l.tags || [],
       note: l.note || "",
       cover: l.cover || "",     // 封面图（og:image）
