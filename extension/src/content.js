@@ -121,16 +121,14 @@
     var code = D.findCode(url, codeContext);
     var sus = !!suspect || D.isLikelyTruncated(url); // 省略号截断 或 ID 明显偏短
     if (seenLinks[key]) {
-      // 已存在，补全提取码 / 标题；若新来源更可信(非截断)则清除疑似标记
+      // 补全提取码 / 标题；若新来源更可信(非截断)则清除疑似标记
       if (!seenLinks[key].code && code) seenLinks[key].code = code;
       if (seenLinks[key].suspect && !sus) seenLinks[key].suspect = false;
-      // 磁链：页面元信息可能异步加载，补全封面/简介
-      if (provider.id === "magnet") {
-        if (!seenLinks[key].cover && pageMetaCache.image) seenLinks[key].cover = pageMetaCache.image;
-        if (!seenLinks[key].desc) {
-          var d2 = pageMetaCache.desc || cleanNearby(codeContext);
-          if (d2) seenLinks[key].desc = d2;
-        }
+      // 封面/简介：页面元信息可能异步加载，补全（对所有链接生效）
+      if (!seenLinks[key].cover && pageMetaCache.image) seenLinks[key].cover = pageMetaCache.image;
+      if (!seenLinks[key].desc) {
+        var d2 = pageMetaCache.desc || cleanNearby(codeContext);
+        if (d2) seenLinks[key].desc = d2;
       }
       return;
     }
@@ -148,8 +146,8 @@
       code: code || "",
       title: title || D.guessTitle("", url, provider),
       suspect: sus,
-      cover: provider.id === "magnet" ? pageMetaCache.image : "",
-      desc: provider.id === "magnet" ? (pageMetaCache.desc || cleanNearby(codeContext)) : "",
+      cover: pageMetaCache.image || "",
+      desc: pageMetaCache.desc || cleanNearby(codeContext) || "",
       sourceUrl: location.href,
       sourceTitle: document.title || "",
       foundAt: Date.now()

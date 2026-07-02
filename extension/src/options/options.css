@@ -335,13 +335,16 @@ button { font-family: inherit; cursor: pointer; border-radius: 8px; font-size: 1
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 
-/* 磁力链接等：封面缩略图与简介 */
-.item-cover { margin: 8px 0; }
+/* 封面 + 简介：位于标题、链接之后；图在左，简介在右 */
+.item-main { display: flex; gap: 12px; align-items: flex-start; margin: 8px 0; }
+.item-cover { flex: 0 0 auto; }
 .item-cover img {
-  max-width: 100%; max-height: 160px; border-radius: 8px; display: block;
-  border: 1px solid #eef0f4; object-fit: cover;
+  width: 120px; height: 120px; border-radius: 8px; display: block;
+  border: 1px solid #eef0f4; object-fit: cover; background: #f3f5fa;
 }
 .item-desc {
-  font-size: 12px; color: #5a6678; line-height: 1.5; margin: 6px 0;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  flex: 1 1 auto; min-width: 0;
+  font-size: 12px; color: #5a6678; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden;
 }
+

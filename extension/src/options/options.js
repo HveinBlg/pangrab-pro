@@ -388,9 +388,12 @@
           liveHtml +
         "</div>" +
         titleHtml +
-        (l.cover ? '<div class="item-cover"><img loading="lazy" referrerpolicy="no-referrer" src="' + escapeHtml(l.cover) + '" alt="" /></div>' : "") +
-        (l.desc ? '<div class="item-desc">' + escapeHtml(l.desc) + "</div>" : "") +
         '<div class="item-url"><a href="' + escapeHtml(l.url) + '" target="_blank" rel="noreferrer">' + escapeHtml(l.url) + "</a></div>" +
+        ((l.cover || l.desc) ?
+          '<div class="item-main">' +
+            (l.cover ? '<div class="item-cover"><img loading="lazy" referrerpolicy="no-referrer" src="' + escapeHtml(l.cover) + '" alt="" /></div>' : "") +
+            (l.desc ? '<div class="item-desc">' + escapeHtml(l.desc) + "</div>" : "") +
+          "</div>" : "") +
         (tags ? '<div class="tags">' + tags + "</div>" : "") +
         (l.note ? '<div class="note">' + escapeHtml(l.note) + "</div>" : "") +
         '<div class="item-meta">' + t("item_saved_at", fmtDate(l.savedAt)) + "</div>" +
