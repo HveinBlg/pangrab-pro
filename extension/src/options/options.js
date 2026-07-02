@@ -461,6 +461,12 @@
   function bindCardEvents() {
     Array.prototype.forEach.call(els.grid.querySelectorAll(".item"), function (card) {
       var key = card.getAttribute("data-key");
+      // 封面裂图（防盗链/失效）时优雅隐藏，避免卡片留裂图占位
+      var coverImg = card.querySelector(".item-cover img");
+      if (coverImg) coverImg.addEventListener("error", function () {
+        var wrap = coverImg.closest(".item-cover");
+        if (wrap) wrap.style.display = "none";
+      });
       card.querySelector(".act-copy").addEventListener("click", function () {
         var l = findByKey(key);
         if (!l) return;

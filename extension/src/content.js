@@ -85,10 +85,33 @@
   }
   function pageMeta() {
     var image = metaContent('meta[property="og:image"]') || metaContent('meta[name="twitter:image"]') || metaContent('meta[itemprop="image"]');
+    if (!image) image = largestImage(); // 保底：页面里最大的一张图
     var desc = metaContent('meta[property="og:description"]') || metaContent('meta[name="description"]') || metaContent('meta[name="twitter:description"]');
     if (image && !/^https?:\/\//i.test(image)) { try { image = new URL(image, location.href).href; } catch (e) { /* ignore */ } }
     if (desc && desc.length > 300) desc = desc.slice(0, 300);
     return { image: image || "", desc: desc || "" };
+  }
+  // 保底封面：取页面里渲染面积最大、且不太小的一张图（过滤图标/广告小图）
+  function largestImage() {
+    var imgs = document.images || [], best = "", bestArea = 0;
+    for (var i = 0; i < imgs.length; i++) {
+      var im = imgs[i];
+      var w = im.naturalWidth || im.width || 0;
+      var h = im.naturalHeight || im.height || 0;
+      if (w < 200 || h < 200) continue;         // 跳过小图标
+      if (w * h > bestArea) { bestArea = w * h; best = im.currentSrc || im.src || ""; }
+    }
+    return best;
+  }
+  // 就近文字：把磁链周围的上下文清洗成一段简介（去链接、去多余空白、限长）
+  function cleanNearby(text) {
+    var s = (text || "")
+      .replace(/magnet:\?[^\s"'<>]+/gi, " ")     // 去磁链本身
+      .replace(/https?:\/\/\S+/gi, " ")          // 去普通链接
+      .replace(/\s+/g, " ")
+      .trim();
+    if (s.length > 200) s = s.slice(0, 200).trim();
+    return s;
   }
 
   function addLink(provider, rawUrl, codeContext, title, suspect) {
@@ -104,7 +127,10 @@
       // 磁链：页面元信息可能异步加载，补全封面/简介
       if (provider.id === "magnet") {
         if (!seenLinks[key].cover && pageMetaCache.image) seenLinks[key].cover = pageMetaCache.image;
-        if (!seenLinks[key].desc && pageMetaCache.desc) seenLinks[key].desc = pageMetaCache.desc;
+        if (!seenLinks[key].desc) {
+          var d2 = pageMetaCache.desc || cleanNearby(codeContext);
+          if (d2) seenLinks[key].desc = d2;
+        }
       }
       return;
     }
@@ -123,7 +149,7 @@
       title: title || D.guessTitle("", url, provider),
       suspect: sus,
       cover: provider.id === "magnet" ? pageMetaCache.image : "",
-      desc: provider.id === "magnet" ? pageMetaCache.desc : "",
+      desc: provider.id === "magnet" ? (pageMetaCache.desc || cleanNearby(codeContext)) : "",
       sourceUrl: location.href,
       sourceTitle: document.title || "",
       foundAt: Date.now()
