@@ -45,6 +45,9 @@
     ".pro-badge.off{background:#eef1f6;color:#7a869a}",
     ".pro-msg{font-size:12px;margin-top:8px;min-height:16px}",
     ".pro-msg.err{color:#cf1322}.pro-msg.ok{color:#15a05b}",
+    ".pro-support{font-size:12px;color:#7a869a;margin-top:10px;line-height:1.6}",
+    ".pro-support a{color:#3d7fff;text-decoration:none}",
+    ".pro-support a:hover{text-decoration:underline}",
     ".pro-hr{border:none;border-top:1px solid #eef0f4;margin:14px 0}",
     ".pro-tabs{display:flex;gap:8px;margin-bottom:12px}",
     ".pro-tab{padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px;background:#f3f5fa}",
@@ -163,6 +166,21 @@
     });
   }
 
+  // 从后端读取客服邮箱并显示联系入口（海外购买/售后）。后端未配置 SUPPORT_EMAIL 时自动隐藏。
+  function renderSupport() {
+    var box = document.getElementById("proSupport");
+    if (!box || !self.PanGrabProConfig || !ProAPI.base) return;
+    fetch(ProAPI.base() + "/api/pay/providers")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var email = d && d.support && d.support.email;
+        if (!email) return;
+        box.innerHTML = t("pro_support") + ' <a href="mailto:' + email + '">' + email + "</a>";
+        box.style.display = "";
+      })
+      .catch(function () { /* 拉取失败则不显示，不影响其它功能 */ });
+  }
+
   function renderAccount() {
     var u = state.user || {};
     var buyLabel = isMainlandChina() ? t("pro_buy_alipay") : t("pro_buy_intl");
@@ -179,6 +197,7 @@
         '<div class="pro-row"><input id="proCode" placeholder="PG-XXXXXXXX" style="flex:1"/>' +
         '<button class="pro-btn primary" id="proRedeem">' + t("pro_redeem") + "</button></div></div>" +
       '<div class="pro-row" style="margin-top:8px"><button class="pro-btn primary" id="proBuy" style="flex:1">' + buyLabel + "</button></div>" +
+      '<div class="pro-support" id="proSupport" style="display:none"></div>' +
       '<hr class="pro-hr"/>' +
       '<div style="font-size:13px;color:#1f2733;margin-bottom:8px;font-weight:600">' + t("pro_sync_section") + "</div>" +
       '<div class="pro-row">' +
@@ -227,6 +246,7 @@
       });
     }
     renderLastSync();
+    renderSupport();
     body.querySelector("#proBuy").addEventListener("click", async function () {
       var token = await ProAPI.getToken();
       if (!token) { msg(t("pro_login_before_buy")); return; }

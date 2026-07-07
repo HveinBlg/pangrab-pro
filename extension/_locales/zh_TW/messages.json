@@ -187,6 +187,7 @@
   "pro_redeem": { "message": "\u5151\u63db" },
   "pro_buy_alipay": { "message": "\uD83D\uDCB3 \u8cfc\u8cb7\u6703\u54e1\uff08\u652f\u4ed8\u5bf6\uff09" },
   "pro_buy_intl": { "message": "\uD83D\uDCB3 \u5347\u7d1a\u5230 Pro" },
+  "pro_support": { "message": "\u9700\u8981\u5354\u52a9 / \u6d77\u5916\u8cfc\u8cb7\uff1f\u806f\u7d61\u5ba2\u670d\uff1a" },
   "pro_account_title": { "message": "\u5e33\u865f / \u96f2\u7aef\u540c\u6b65" },
   "pro_account_btn": { "message": "\u2601\ufe0f \u5e33\u865f / \u96f2\u7aef\u540c\u6b65" },
   "pro_sync_section": { "message": "\u96f2\u7aef\u540c\u6b65\uff08Pro\uff09" },

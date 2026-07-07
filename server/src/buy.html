@@ -58,6 +58,18 @@
   .spinner { display:inline-block; width:14px; height:14px; border:2px solid #cdd6e4; border-top-color:#1677ff;
     border-radius:50%; animation: spin .8s linear infinite; vertical-align:-2px; margin-right:6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* 联系客服 / Payoneer 购买视图 */
+  .contact-intro { color:#5a6678; font-size:13px; line-height:1.7; margin:6px 0 16px; text-align:center; }
+  .contact-steps { margin:0 0 16px; padding-left:20px; color:#3a4657; font-size:13px; line-height:1.9; text-align:left; }
+  .contact-steps li { margin-bottom:4px; }
+  .contact-email { display:flex; align-items:center; gap:8px; background:#f3f8ff; border:1px solid #dbe7ff;
+    border-radius:10px; padding:10px 12px; margin-bottom:14px; }
+  .contact-email .em { flex:1; font-size:14px; font-weight:600; color:#1f2733; word-break:break-all; text-align:left; }
+  .contact-email .copy { border:1px solid #cdd9f2; background:#fff; color:#3d7fff; border-radius:8px;
+    padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .contact-email .copy:hover { background:#eef4ff; }
+  .btn.payoneer { background:#ff4800; color:#fff; margin-top:10px; text-align:center; text-decoration:none; display:block; }
+  .btn.mail { text-align:center; text-decoration:none; display:block; }
 </style>
 </head>
 <body>
@@ -102,6 +114,25 @@
       <div class="qr-status" id="qrStatus"><span class="spinner"></span><span data-i18n="qr_wait">Waiting for payment…</span></div>
       <span class="link" id="qrBack" data-i18n="qr_back">‹ Back</span>
     </div>
+
+    <!-- 国际支付 · 联系客服 / Payoneer 视图 -->
+    <div id="contactView" class="hide">
+      <h1 data-i18n="contact_title">Buy Pro internationally</h1>
+      <div class="contact-intro" data-i18n="contact_intro">Complete your purchase via Payoneer. We'll send you a redemption code by email after payment.</div>
+      <ol class="contact-steps">
+        <li data-i18n="contact_step1">Email us your account email and the plan you want.</li>
+        <li data-i18n="contact_step2">We send you a Payoneer payment link (card / PayPal / bank).</li>
+        <li data-i18n="contact_step3">After payment, we email you a redemption code — enter it in the extension to activate.</li>
+      </ol>
+      <div class="contact-email">
+        <span class="em" id="contactEmail"></span>
+        <button class="copy" id="contactCopy" data-i18n="contact_copy">Copy</button>
+      </div>
+      <a class="btn intl mail" id="contactMail" href="#" data-i18n="contact_mail_btn">Email us to buy</a>
+      <a class="btn payoneer hide" id="contactPayoneer" href="#" target="_blank" rel="noreferrer" data-i18n="contact_payoneer_btn">Pay with Payoneer</a>
+      <div class="msg" id="contactMsg"></div>
+      <span class="link" id="contactBack" data-i18n="qr_back">‹ Back</span>
+    </div>
   </div>
 
 <script>
@@ -128,7 +159,18 @@
       paid_ok: "✓ 支付成功！会员已开通，请回扩展刷新。",
       creating: "正在创建订单…", redirecting: "正在跳转支付…",
       order_failed: "下单失败", order_bad: "下单返回异常",
-      no_token: "缺少登录凭证，请从扩展内的「购买会员」按钮进入本页。"
+      no_token: "缺少登录凭证，请从扩展内的「购买会员」按钮进入本页。",
+      pay_payoneer_btn: "海外购买 / Pay via Payoneer",
+      contact_title: "海外购买 Pro",
+      contact_intro: "通过 Payoneer 完成付款，到账后我们会用邮件把兑换码发给你。",
+      contact_step1: "把你的账号邮箱和想买的套餐发邮件给我们。",
+      contact_step2: "我们会给你发一个 Payoneer 付款链接（支持信用卡 / PayPal / 银行）。",
+      contact_step3: "付款后我们用邮件发给你兑换码，在扩展里兑换即可开通。",
+      contact_copy: "复制", contact_copied: "已复制",
+      contact_mail_btn: "发邮件联系客服购买",
+      contact_payoneer_btn: "用 Payoneer 付款",
+      contact_mail_subject: "PanGrab Pro 海外购买",
+      contact_mail_body: "你好，我想购买 PanGrab Pro（套餐：__请填写 月/季/年__）。\n我的账号邮箱：__请填写你注册的邮箱__\n请发给我 Payoneer 付款链接，谢谢！"
     },
     tw: {
       title: "開通 PanGrab Pro",
@@ -148,7 +190,18 @@
       paid_ok: "✓ 付款成功！會員已開通，請回擴充功能重新整理。",
       creating: "正在建立訂單…", redirecting: "正在前往付款…",
       order_failed: "下單失敗", order_bad: "下單回傳異常",
-      no_token: "缺少登入憑證，請從擴充功能內的「購買會員」按鈕進入本頁。"
+      no_token: "缺少登入憑證，請從擴充功能內的「購買會員」按鈕進入本頁。",
+      pay_payoneer_btn: "海外購買 / Pay via Payoneer",
+      contact_title: "海外購買 Pro",
+      contact_intro: "透過 Payoneer 完成付款，款項到帳後我們會以電子郵件把兌換碼發給你。",
+      contact_step1: "把你的帳號電子郵件和想購買的方案寄信給我們。",
+      contact_step2: "我們會給你一個 Payoneer 付款連結（支援信用卡 / PayPal / 銀行）。",
+      contact_step3: "付款後我們以電子郵件發給你兌換碼，在擴充功能裡兌換即可開通。",
+      contact_copy: "複製", contact_copied: "已複製",
+      contact_mail_btn: "寄信聯絡客服購買",
+      contact_payoneer_btn: "用 Payoneer 付款",
+      contact_mail_subject: "PanGrab Pro 海外購買",
+      contact_mail_body: "你好，我想購買 PanGrab Pro（方案：__請填寫 月/季/年__）。\n我的帳號電子郵件：__請填寫你註冊的信箱__\n請發給我 Payoneer 付款連結，謝謝！"
     },
     en: {
       title: "Upgrade to PanGrab Pro",
@@ -168,7 +221,18 @@
       paid_ok: "✓ Paid! Membership activated. Please return to the extension and refresh.",
       creating: "Creating order…", redirecting: "Redirecting…",
       order_failed: "Failed to create order", order_bad: "Unexpected order response",
-      no_token: "Missing login token. Please open this page via the \u201cBuy membership\u201d button in the extension."
+      no_token: "Missing login token. Please open this page via the \u201cBuy membership\u201d button in the extension.",
+      pay_payoneer_btn: "Buy via Payoneer",
+      contact_title: "Buy Pro internationally",
+      contact_intro: "Complete your purchase via Payoneer. We'll email you a redemption code after payment.",
+      contact_step1: "Email us your account email and the plan you want.",
+      contact_step2: "We send you a Payoneer payment link (card / PayPal / bank).",
+      contact_step3: "After payment, we email you a redemption code — enter it in the extension to activate.",
+      contact_copy: "Copy", contact_copied: "Copied",
+      contact_mail_btn: "Email us to buy",
+      contact_payoneer_btn: "Pay with Payoneer",
+      contact_mail_subject: "PanGrab Pro international purchase",
+      contact_mail_body: "Hi, I'd like to buy PanGrab Pro (plan: __monthly/quarterly/yearly__).\nMy account email: __your registered email__\nPlease send me a Payoneer payment link. Thanks!"
     }
   };
   function L(key) { return (DICT[LANG] && DICT[LANG][key]) || DICT.en[key] || key; }
@@ -187,14 +251,23 @@
   var token = params.get("token") || "";
   var selectedPlan = "month";
   var provider = "alipay";
-  var providers = { alipay: false, lemonsqueezy: false };
+  var providers = { alipay: false, lemonsqueezy: false, payoneer: false };
+  var support = { email: "", payoneerUrl: "" };
   var plans = null;
   var pollTimer = null;
 
   var el = function (id) { return document.getElementById(id); };
   var plansEl = el("plans"), btn = el("payBtn"), msgEl = el("msg");
   var tabAlipay = el("tabAlipay"), tabIntl = el("tabIntl");
-  var selectView = el("selectView"), qrView = el("qrView");
+  var selectView = el("selectView"), qrView = el("qrView"), contactView = el("contactView");
+
+  // 国际支付优先级：Lemon Squeezy（自动收单）> Payoneer（人工收款+兑换码）。
+  // LS 审核通过并在 .env 配好后会自动接管，无需改动前端。
+  function intlProvider() {
+    if (providers.lemonsqueezy) return "lemonsqueezy";
+    if (providers.payoneer) return "payoneer";
+    return "";
+  }
 
   function msg(t, ok) { msgEl.textContent = t || ""; msgEl.className = "msg " + (ok ? "ok" : "err"); }
   // 是否中国大陆用户：优先看时区（台湾/香港/澳门及海外都不算），回退到简体中文语言。
@@ -214,7 +287,7 @@
     ["month", "quarter", "year"].forEach(function (k) {
       var node = plansEl.querySelector('[data-p="' + k + '"]');
       if (!node) return;
-      if (provider === "alipay" && plans && plans[k]) {
+      if ((provider === "alipay" || provider === "payoneer") && plans && plans[k]) {
         var unit = k === "month" ? L("unit_month") : k === "quarter" ? L("unit_quarter") : L("unit_year");
         node.innerHTML = "\u00a5" + plans[k].amount + '<small>' + unit + '</small>';
       } else {
@@ -226,24 +299,26 @@
   function setProvider(p) {
     provider = p;
     tabAlipay.classList.toggle("active", p === "alipay");
-    tabIntl.classList.toggle("active", p === "lemonsqueezy");
+    tabIntl.classList.toggle("active", p === "lemonsqueezy" || p === "payoneer");
     if (p === "alipay") { btn.className = "btn"; btn.textContent = L("pay_alipay_btn"); }
+    else if (p === "payoneer") { btn.className = "btn intl"; btn.textContent = L("pay_payoneer_btn"); }
     else { btn.className = "btn intl"; btn.textContent = L("pay_intl_btn"); }
     renderPrices();
   }
 
   function applyProviders() {
+    var hasIntl = providers.lemonsqueezy || providers.payoneer;
     tabAlipay.classList.toggle("hide", !providers.alipay);
-    tabIntl.classList.toggle("hide", !providers.lemonsqueezy);
+    tabIntl.classList.toggle("hide", !hasIntl);
     var available = [];
     if (providers.alipay) available.push("alipay");
-    if (providers.lemonsqueezy) available.push("lemonsqueezy");
+    if (hasIntl) available.push("intl");
     if (available.length === 0) { el("tabs").classList.add("hide"); btn.disabled = true;
       msg(L("no_online_pay")); return; }
     if (available.length === 1) el("tabs").classList.add("hide");
-    var prefer = isMainlandChina() ? "alipay" : "lemonsqueezy";
+    var prefer = isMainlandChina() ? "alipay" : "intl";
     if (available.indexOf(prefer) === -1) prefer = available[0];
-    setProvider(prefer);
+    setProvider(prefer === "intl" ? intlProvider() : "alipay");
   }
 
   plansEl.addEventListener("click", function (e) {
@@ -255,7 +330,7 @@
   });
 
   tabAlipay.addEventListener("click", function () { if (providers.alipay) setProvider("alipay"); });
-  tabIntl.addEventListener("click", function () { if (providers.lemonsqueezy) setProvider("lemonsqueezy"); });
+  tabIntl.addEventListener("click", function () { var ip = intlProvider(); if (ip) setProvider(ip); });
 
   // 显示扫码视图并开始轮询
   function showQr(data) {
@@ -272,10 +347,42 @@
   function backToSelect() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     qrView.classList.add("hide");
+    contactView.classList.add("hide");
     selectView.classList.remove("hide");
     btn.disabled = false; msg("");
   }
   el("qrBack").addEventListener("click", backToSelect);
+  el("contactBack").addEventListener("click", backToSelect);
+
+  // 显示国际支付「联系客服 / Payoneer」视图
+  function showContact() {
+    selectView.classList.add("hide");
+    qrView.classList.add("hide");
+    contactView.classList.remove("hide");
+    el("contactEmail").textContent = support.email || "";
+    var planName = L("plan_" + selectedPlan + "_name");
+    var subject = encodeURIComponent(L("contact_mail_subject") + " · " + planName);
+    var bodyTxt = encodeURIComponent(L("contact_mail_body"));
+    el("contactMail").setAttribute("href", "mailto:" + (support.email || "") + "?subject=" + subject + "&body=" + bodyTxt);
+    var pay = el("contactPayoneer");
+    if (support.payoneerUrl) { pay.setAttribute("href", support.payoneerUrl); pay.classList.remove("hide"); }
+    else { pay.classList.add("hide"); }
+    el("contactMsg").textContent = "";
+  }
+
+  // 复制客服邮箱
+  el("contactCopy").addEventListener("click", function () {
+    var email = support.email || "";
+    if (!email) return;
+    var done = function () { var m = el("contactMsg"); m.className = "msg ok"; m.textContent = L("contact_copied"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(email).then(done, done);
+    } else {
+      var ta = document.createElement("textarea"); ta.value = email; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); done();
+    }
+  });
 
   function startPolling(outTradeNo) {
     if (pollTimer) clearInterval(pollTimer);
@@ -296,6 +403,8 @@
 
   btn.addEventListener("click", async function () {
     if (!token) return;
+    // Payoneer 方案：不走自动下单，直接进入「联系客服 / Payoneer 付款」引导视图
+    if (provider === "payoneer") { showContact(); return; }
     btn.disabled = true; msg(L("creating"), true);
     try {
       var r = await fetch("/api/order/create", {
@@ -319,6 +428,7 @@
     fetch("/api/pay/providers").then(function (r) { return r.json(); }).then(function (d) {
       providers = d.providers || providers;
       plans = d.plans || null;
+      support = d.support || support;
     }).catch(function () {}).then(function () {
       applyProviders();
       renderPrices();

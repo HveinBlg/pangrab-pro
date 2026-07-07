@@ -24,6 +24,10 @@ const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 const ADMIN_KEY = process.env.ADMIN_KEY || "dev-admin-change-me";
 // 服务器对外可访问地址（支付宝回调/跳转用），如 https://api.你的域名 或 http://你的IP:8787
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || ("http://localhost:" + PORT);
+// 客服邮箱：海外用户走 Payoneer 人工收款 + 兑换码时的联系入口。配置了它，购买页/扩展就会显示「联系客服」并开启 International 标签的 Payoneer 方案。
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "";
+// 可选：固定的 Payoneer 收款/付款请求链接（Payoneer「Request a Payment」生成的链接）。填了则购买页会额外显示「用 Payoneer 付款」按钮。
+const PAYONEER_URL = process.env.PAYONEER_URL || "";
 
 // 会员套餐（金额单位：元）。可自行修改价格/天数。
 const PLANS = {
@@ -297,8 +301,12 @@ app.get("/api/pay/providers", (_req, res) => {
   res.json({
     providers: {
       alipay: alipay.enabled(),
-      lemonsqueezy: lemon.enabled()
+      lemonsqueezy: lemon.enabled(),
+      // Payoneer 人工收款方案：只要配置了客服邮箱即视为可用（无需自动 checkout，走联系客服 + 兑换码）
+      payoneer: !!SUPPORT_EMAIL
     },
+    // 客服联系方式（购买页/扩展显示；海外 Payoneer 购买与售后支持用）
+    support: { email: SUPPORT_EMAIL, payoneerUrl: PAYONEER_URL },
     // 支付宝按人民币定价；Lemon Squeezy 价格在其后台按变体设置，按用户所在地货币结算
     plans: {
       month: { days: PLANS.month.days, amount: PLANS.month.amount },

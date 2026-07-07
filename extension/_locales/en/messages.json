@@ -187,6 +187,7 @@
   "pro_redeem": { "message": "Redeem" },
   "pro_buy_alipay": { "message": "\uD83D\uDCB3 Buy membership (Alipay)" },
   "pro_buy_intl": { "message": "\uD83D\uDCB3 Upgrade to Pro" },
+  "pro_support": { "message": "Need help or buying from outside China? Contact us:" },
   "pro_account_title": { "message": "Account / Cloud Sync" },
   "pro_account_btn": { "message": "\u2601\ufe0f Account / Cloud Sync" },
   "pro_sync_section": { "message": "Cloud Sync (Pro)" },
