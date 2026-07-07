@@ -141,6 +141,21 @@ function payDonePage() {
     '<p>本页面可以关闭 / You can close this page.</p>';
 }
 
+// 渲染带占位符的静态页（隐私政策 / 落地页）：把客服邮箱等配置注入 HTML，保持 .env 为单一配置源。
+// 占位符：{{SUPPORT_EMAIL}} {{PAYONEER_URL}} {{PUBLIC_BASE_URL}}
+function renderPage(res, filename) {
+  const fs = require("fs");
+  const file = require("path").join(__dirname, filename);
+  let html;
+  try { html = fs.readFileSync(file, "utf8"); }
+  catch (e) { res.status(404).send("Not found"); return; }
+  html = html
+    .replace(/\{\{SUPPORT_EMAIL\}\}/g, SUPPORT_EMAIL || "")
+    .replace(/\{\{PAYONEER_URL\}\}/g, PAYONEER_URL || "")
+    .replace(/\{\{PUBLIC_BASE_URL\}\}/g, PUBLIC_BASE_URL || "");
+  res.type("html").send(html);
+}
+
 /* ----------------------------- 账号 ----------------------------- */
 app.post("/api/register", (req, res) => {
   const { email, password } = req.body || {};
@@ -428,6 +443,12 @@ app.get("/api/pay/return", (_req, res) => { res.type("html").send(payDonePage())
 app.get("/buy", (_req, res) => {
   res.sendFile(require("path").join(__dirname, "buy.html"));
 });
+
+// 隐私政策（Chrome 网上应用店上架必需；客服邮箱由 .env 注入）
+app.get("/privacy", (_req, res) => renderPage(res, "privacy.html"));
+
+// 产品 / 联系购买说明 落地页（可作为 Chrome 商店的主页/支持 URL）
+app.get("/", (_req, res) => renderPage(res, "landing.html"));
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, time: now() }));
 

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PanGrab Pro — 网盘链接抓手 / Cloud-drive link grabber</title>
+<meta name="description" content="PanGrab Pro：一键识别与收藏网盘链接、提取码与磁力链，支持云同步。How to buy Pro & contact support." />
+<style>
+  :root { --primary:#3d7fff; --border:#e6eaf2; --muted:#7a869a; --text:#1f2733; --ok:#15a05b; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+    color: var(--text); background: #f5f7fb; margin: 0; line-height: 1.7; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 48px 20px 80px; }
+  .hero { text-align: center; margin-bottom: 34px; }
+  .hero h1 { font-size: 30px; margin: 0 0 8px; }
+  .hero .sub { color: var(--muted); font-size: 16px; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 26px 28px;
+    box-shadow: 0 2px 10px rgba(20,30,60,.05); margin-bottom: 18px; }
+  h2 { font-size: 18px; margin: 0 0 12px; }
+  .lang-en { color: #5a6678; }
+  p, li { font-size: 14.5px; }
+  ul, ol { padding-left: 20px; margin: 8px 0; }
+  li { margin-bottom: 6px; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 10px; border-radius:999px; margin-bottom:10px; }
+  .pill.cn { background:#e8f3ff; color:#1677ff; }
+  .pill.intl { background:#fff1e8; color:#ff4800; }
+  .btn { display:inline-block; background:var(--primary); color:#fff; padding:11px 18px; border-radius:10px;
+    font-weight:600; font-size:14px; margin:6px 8px 0 0; }
+  .btn.payoneer { background:#ff4800; }
+  .btn.ghost { background:#fff; color:var(--primary); border:1px solid #cdd9f2; }
+  .email { display:inline-block; background:#f3f8ff; border:1px solid #dbe7ff; border-radius:8px;
+    padding:8px 12px; font-weight:600; margin-top:6px; }
+  .foot { text-align:center; color:var(--muted); font-size:13px; margin-top:26px; }
+  .foot a { margin: 0 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>PanGrab Pro</h1>
+    <div class="sub">一键识别 · 收藏网盘链接、提取码与磁力链，支持多设备云同步<br />
+      <span class="lang-en">Detect &amp; save cloud-drive links, extraction codes and magnet links — with cross-device cloud sync.</span></div>
+  </div>
+
+  <div class="card">
+    <h2>功能亮点 <span class="lang-en">/ Features</span></h2>
+    <ul>
+      <li>自动识别 27+ 家网盘链接、提取码与磁力链。<span class="lang-en"> Auto-detects 27+ cloud drives, extraction codes and magnet links.</span></li>
+      <li>一键收藏、分类管理、失效标记。<span class="lang-en"> One-click save, folders, and dead-link flags.</span></li>
+      <li>Pro 会员：多设备云同步，换电脑/浏览器不丢收藏。<span class="lang-en"> Pro: cloud sync across devices.</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="pill cn">中国大陆</span>
+    <h2>如何购买 Pro（国内）<span class="lang-en">/ Buy Pro (Mainland China)</span></h2>
+    <ol>
+      <li>安装扩展后，打开「账号 / 云同步」面板并注册登录。<span class="lang-en"> Install the extension, open the “Account / Cloud sync” panel, and sign up.</span></li>
+      <li>点击「购买会员」，使用<strong>支付宝</strong>扫码付款，到账后会员自动开通。<span class="lang-en"> Click “Buy membership” and pay via Alipay; your membership activates automatically.</span></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <span class="pill intl">International</span>
+    <h2>如何购买 Pro（海外）<span class="lang-en">/ Buy Pro (International)</span></h2>
+    <p>海外用户通过 <strong>Payoneer</strong> 付款，流程如下：<span class="lang-en">International users pay via Payoneer:</span></p>
+    <ol>
+      <li>发邮件给我们，附上你的<strong>账号邮箱</strong>和想购买的套餐。<span class="lang-en"> Email us your account email and the plan you want.</span></li>
+      <li>我们回复一个 Payoneer 付款链接（支持信用卡 / PayPal / 银行）。<span class="lang-en"> We reply with a Payoneer payment link (card / PayPal / bank).</span></li>
+      <li>付款后我们用邮件发你一个<strong>兑换码</strong>，在扩展里兑换即可开通 Pro。<span class="lang-en"> After payment we email you a redemption code to activate Pro in the extension.</span></li>
+    </ol>
+    <div style="margin-top:10px">
+      <a class="btn" id="mailBtn" href="mailto:{{SUPPORT_EMAIL}}?subject=PanGrab%20Pro%20international%20purchase">✉️ 邮件购买 / Email to buy</a>
+      <a class="btn payoneer" id="payoneerBtn" href="{{PAYONEER_URL}}" target="_blank" rel="noreferrer">Pay with Payoneer</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>联系客服 <span class="lang-en">/ Contact &amp; Support</span></h2>
+    <p>任何购买、使用或售后问题，欢迎联系：<span class="lang-en">For any purchase, usage, or support questions, contact us:</span></p>
+    <div class="email"><a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a></div>
+  </div>
+
+  <div class="foot">
+    <a href="/privacy">隐私政策 / Privacy Policy</a> ·
+    <a href="mailto:{{SUPPORT_EMAIL}}">客服邮箱 / Support</a>
+    <div style="margin-top:8px">© PanGrab Pro</div>
+  </div>
+</div>
+
+<script>
+  // PAYONEER_URL 未配置时隐藏 Payoneer 直达按钮（仍可通过邮件联系购买）
+  (function () {
+    var payUrl = "{{PAYONEER_URL}}";
+    var b = document.getElementById("payoneerBtn");
+    if (b && (!payUrl || payUrl.indexOf("{{") === 0)) b.style.display = "none";
+  })();
+</script>
+</body>
+</html>

@@ -19,6 +19,8 @@ cp .env.example .env
 # 编辑 .env，填强随机值：
 # JWT_SECRET=用 openssl rand -hex 32 生成
 # ADMIN_KEY=你的发码密钥
+# SUPPORT_EMAIL=你的客服邮箱   ← 填了才会显示「联系客服」+ 开启海外 Payoneer 购买
+# PAYONEER_URL=（可选）Payoneer 固定收款链接
 ```
 > 本服务会自动读取环境变量；若用 .env，可配合 PM2 的 env 或 `export $(cat .env|xargs)`。
 
@@ -88,6 +90,40 @@ curl -X POST https://api.ktsla.eu.cc/api/admin/codes \
   -H 'x-admin-key: 你的ADMIN_KEY' -H 'Content-Type: application/json' \
   -d '{"count":10,"days":30}'
 ```
+
+## 客服 / 海外购买（Payoneer 方案 B）
+在 `server/.env` 里填客服邮箱后重启即可，无需改代码：
+```bash
+# server/.env
+SUPPORT_EMAIL=your-support@example.com
+PAYONEER_URL=            # 可选：Payoneer「Request a Payment」固定收款链接
+```
+重启后端使配置生效：
+```bash
+pm2 restart pgpro --update-env      # PM2 方式（--update-env 让它读取新环境变量）
+```
+验证是否生效：
+```bash
+curl https://api.ktsla.eu.cc/api/pay/providers
+# 返回里应能看到 "payoneer":true 与 "support":{"email":"your-support@example.com", ...}
+```
+生效后：购买页 International 标签、扩展「账号/云同步」面板都会显示客服入口；海外用户走「邮件联系 → 你用 Payoneer 收款 → 你在 /admin 发兑换码 → 用户在扩展兑换」。
+
+## 网页页面一览（都由后端提供）
+| 路径 | 说明 |
+|------|------|
+| `https://api.ktsla.eu.cc/` | 产品 / 联系购买说明 **落地页**（可作 Chrome 商店主页 URL） |
+| `https://api.ktsla.eu.cc/privacy` | **隐私政策**（Chrome 商店上架必需） |
+| `https://api.ktsla.eu.cc/buy` | 购买页（需从扩展内带 token 打开） |
+| `https://api.ktsla.eu.cc/admin` | 管理后台（需输入 ADMIN_KEY） |
+
+> 落地页与隐私政策里的客服邮箱由 `.env` 的 `SUPPORT_EMAIL` 自动注入，改一处即可。
+
+## Chrome 网上应用店：上架要填的两个链接
+在 [开发者后台](https://chrome.google.com/webstore/devconsole) 你的扩展里：
+- **账号 Account → Contact email**：填 `SUPPORT_EMAIL` 同一个邮箱并完成验证（必填）。
+- **Store listing → 主页/支持 URL**：主页填 `https://api.ktsla.eu.cc/`，支持可填同一落地页或客服邮箱。
+- **Privacy practices → 隐私政策 URL**：填 `https://api.ktsla.eu.cc/privacy`（必填，否则审核不通过）。
 
 ## 防火墙
 - GCP 放行 **443** 入站（你之前遇到的就是这个）
