@@ -194,24 +194,50 @@ button { font-family: inherit; cursor: pointer; border-radius: 8px; font-size: 1
   padding: 8px 28px;
 }
 
+/* 融合优化：将 padding 改为由内部块精确控制，从而保证大图可以无死角通栏左右铺满 */
 .item {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px;
+  padding: 14px 0 0; /* 留出上下边距，左右由子项自己决定 padding */
   display: flex;
   flex-direction: column;
   gap: 8px;
   box-shadow: 0 1px 3px rgba(20, 30, 60, 0.04);
+  overflow: hidden;  /* 防止图片悬停放大时圆角溢出 */
 }
-.item-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* 文字区块独立补齐 14px 的安全框，防止发生拥挤和贴边 */
+.item-head { 
+  padding: 4px 14px 2px !important; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  flex-wrap: wrap; 
+}
+.item-url { padding: 0 14px 4px !important; }
+.item-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); padding: 0 14px; }
+.tags { display: flex; gap: 5px; flex-wrap: wrap; padding: 0 14px; }
+.note { font-size: 12px; color: var(--muted); background: #fafbfd; border-radius: 6px; padding: 6px 8px; margin: 0 14px; }
+.item-actions { display: flex; gap: 6px; margin-top: auto; padding: 8px 14px 14px !important; }
+
 .badge { font-size: 11px; color: #fff; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
-.item-title { font-size: 14px; font-weight: 600; word-break: break-all; }
+
+/* 标题样式：多行文本拉开行高，并赋予绝对边距 */
+.item-title { 
+  font-size: 14px; 
+  font-weight: 600; 
+  word-break: break-all; 
+  padding: 0 14px !important; 
+  line-height: 1.45 !important;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 .item-title.placeholder { color: var(--muted); font-weight: 400; }
+
 .item-url { font-size: 12px; word-break: break-all; line-height: 1.5; }
 .item-url a { color: var(--primary); text-decoration: none; }
 .item-url a:hover { text-decoration: underline; }
-.item-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+
 .code-chip { background: #fff4e0; color: #c47a00; border: 1px solid #ffe2b0; padding: 1px 7px; border-radius: 4px; }
 .suspect-chip {
   font-size: 11px;
@@ -228,10 +254,8 @@ button { font-family: inherit; cursor: pointer; border-radius: 8px; font-size: 1
 .live-chip.alive { background: #f0fff4; color: #15a05b; border: 1px solid #b7eb8f; }
 .live-chip.dead { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
 .live-chip.unknown { background: #f0f2f6; color: #7a869a; border: 1px solid var(--border); }
-.tags { display: flex; gap: 5px; flex-wrap: wrap; }
 .tag { font-size: 11px; background: #f0f2f6; color: #5a6680; padding: 1px 8px; border-radius: 4px; }
-.note { font-size: 12px; color: var(--muted); background: #fafbfd; border-radius: 6px; padding: 6px 8px; }
-.item-actions { display: flex; gap: 6px; margin-top: 2px; }
+
 .mini-btn {
   flex: 1;
   background: #f3f5fa;
@@ -335,23 +359,78 @@ button { font-family: inherit; cursor: pointer; border-radius: 8px; font-size: 1
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 
-/* 封面 + 简介：位于标题、链接之后；图在左，简介在右 */
-.item-main { display: flex; gap: 12px; align-items: flex-start; margin: 8px 0; }
-.item-cover { flex: 0 0 auto; }
-.item-cover img {
-  width: 160px; height: 100px; border-radius: 8px; display: block;
-  border: 1px solid #eef0f4; object-fit: cover; object-position: center; background: #f3f5fa;
+/* ========================================================
+   核心功能：封面区域纵向化 ＆ 智能鼠标悬停滚动放大镜
+   ======================================================== */
+
+/* 1. 将原本的左右并排结构升级为纵向流排列，满足通栏条件 */
+.item-main { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0px; 
+  margin: 6px 0; 
+  width: 100%;
 }
+
+/* 2. 智能放大镜大图容器：平时限制 170px 保证整齐，悬停时转换为纵向内滚动查看所有截断部分 */
+.item-cover { 
+  width: 100%; 
+  height: 170px;               /* 完美对齐的固定卡片高度 */
+  position: relative;
+  overflow: hidden;            /* 平时隐藏超出范围的上下部分 */
+  cursor: zoom-in;             /* 指针变为放大镜图标 */
+  transition: all 0.25s ease;
+  background: #f8fafc;
+}
+
+/* 鼠标移入容器：激活纵向滚动，允许使用滚轮完整划看整张大图 */
+.item-cover:hover {
+  overflow-y: auto;            /* 关键：悬停时激活纵向滚动条 */
+  background: #f1f5f9;
+}
+
+/* 自定义卡片内滚动条：极简美化 */
+.item-cover::-webkit-scrollbar {
+  width: 5px;
+}
+.item-cover::-webkit-scrollbar-track {
+  background: transparent;
+}
+.item-cover::-webkit-scrollbar-thumb {
+  background: rgba(61, 127, 255, 0.35); /* 使用配色的 --primary 透明层 */
+  border-radius: 10px;
+}
+
+/* 3. 核心图片：平时完全左右铺满通栏，鼠标移入时解禁高度限制 */
+.item-cover img {
+  width: 100% !important; 
+  height: 170px !important;    /* 平时完全对齐 */
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid #eef0f4;
+  border-bottom: 1px solid #eef0f4;
+  display: block;
+   Lawrence-size: 100%;
+  object-fit: cover;           /* 平时左右完美通栏铺满 */
+  transition: transform 0.2s ease, height 0.15s ease-out;
+}
+
+/* 悬停放大状态：解除高度截断，回归原本自适应高度，配合外层父容器滚动 */
+.item-cover:hover img {
+  height: auto !important;     /* 恢复图片的自然比例真实高度 */
+  min-height: 100% !important; 
+  transform: scale(1.01);      /* 推进1%视觉聚焦 */
+}
+
+/* 4. 图片下方的简介区域：独立补齐 14px 安全内边距 */
 .item-desc {
-  flex: 1 1 auto; min-width: 0;
-  font-size: 12px; color: #5a6678; line-height: 1.5;
+  flex: 1 1 auto; 
+  min-width: 0;
+  padding: 8px 14px 2px !important; /* 给上部预留呼吸间距，两边绝对对齐 */
+  font-size: 12px; 
+  color: #5a6678; 
+  line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-/* 标题精简：最多两行，超出省略 */
-.item-title {
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-/* 链接与提取码同行 */
-.item-url { word-break: break-all; }
-.item-url .code-chip { margin-left: 6px; vertical-align: middle; }
 
+.item-url .code-chip { margin-left: 6px; vertical-align: middle; }

@@ -113,13 +113,60 @@
     if (s.length > 80) s = s.slice(0, 80).trim(); // 精简，只留主要内容
     return s;
   }
-  // 磁链简介：优先从文件名(dn)解析出「番号」（统一为 字母-数字），否则退回就近短文字
+
+  /**
+   * 基于 DOM 结构提取繁体字字段信息（演員、類別）
+   */
+  function getInfoFromPage(labelText) {
+    try {
+      var blocks = document.querySelectorAll('.panel-block');
+      for (var i = 0; i < blocks.length; i++) {
+        var strong = blocks[i].querySelector('strong');
+        if (strong && strong.textContent.includes(labelText)) {
+          var text = blocks[i].textContent.replace(strong.textContent, "").trim();
+          return text;
+        }
+      }
+    } catch (e) {
+      console.error("抓取頁面信息失敗", e);
+    }
+    return "";
+  }
+
+  // 磁链简介：优先从文件名(dn)解析出「番号」（统一为 字母-数字），并融合页面抓取的「演員」与「類別」
   function magnetDesc(url, ctx) {
     var dn = "";
     var m = /[?&]dn=([^&]+)/i.exec(url || "");
     if (m) { try { dn = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { dn = m[1]; } }
+    
+    // 解析番号（统一为 字母-数字）
+    var codeStr = "";
     var mm = dn.match(/([A-Za-z]{2,6})-?(\d{2,5})/);
-    if (mm) return "番号：" + (mm[1] + "-" + mm[2]).toUpperCase();
+    if (mm) {
+      codeStr = "番号：" + (mm[1] + "-" + mm[2]).toUpperCase();
+    }
+
+    // 提取繁体字及来自页面的兼容字段
+    var actor = getInfoFromPage("演員") || getInfoFromPage("出演者");
+    var category = getInfoFromPage("類別");
+
+    var parts = [];
+    if (codeStr) {
+      parts.push(codeStr);
+    }
+    if (actor) {
+      parts.push("演員：" + actor);
+    }
+    if (category) {
+      parts.push("類別：" + category);
+    }
+
+    // 如果抓取到了任意核心组合字段，用 " | " 拼接输出
+    if (parts.length > 0) {
+      return parts.join(" | ");
+    }
+
+    // 否则退回就近短文字兜底
     return cleanNearby(ctx);
   }
 
@@ -135,9 +182,17 @@
       if (seenLinks[key].suspect && !sus) seenLinks[key].suspect = false;
       // 封面/简介：页面元信息可能异步加载，补全
       if (!seenLinks[key].cover && pageMetaCache.image) seenLinks[key].cover = pageMetaCache.image;
-      if (provider.id === "magnet" && !seenLinks[key].desc) {
+      
+      if (provider.id === "magnet") {
+        // 磁链二次合并优化：只有当新抓取的内容信息量更丰富时，才允许覆盖
+        // 避免页面滚动、虚拟滚动列表更新导致 DOM 节点暂时消失而让已保存的演员/类别被短文字冲掉
         var d2 = magnetDesc(url, codeContext);
-        if (d2) seenLinks[key].desc = d2;
+        if (d2) {
+          var oldDesc = seenLinks[key].desc || "";
+          if (d2.length > oldDesc.length || oldDesc.indexOf(" | ") === -1) {
+            seenLinks[key].desc = d2;
+          }
+        }
       }
       return;
     }
