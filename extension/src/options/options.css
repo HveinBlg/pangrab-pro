@@ -410,7 +410,6 @@ button { font-family: inherit; cursor: pointer; border-radius: 8px; font-size: 1
   border-top: 1px solid #eef0f4;
   border-bottom: 1px solid #eef0f4;
   display: block;
-   Lawrence-size: 100%;
   object-fit: cover;           /* 平时左右完美通栏铺满 */
   transition: transform 0.2s ease, height 0.15s ease-out;
 }
