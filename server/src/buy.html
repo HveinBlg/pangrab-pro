@@ -283,13 +283,18 @@
     return lang === "zh-cn" || lang.indexOf("zh-hans") === 0;
   }
 
+  // Payoneer 国际支付显示美元参考价（实际金额以发起的 Payoneer 付款请求为准）
+  var USD_PRICES = { month: "2.99", quarter: "6.99", year: "11.99" };
+
   function renderPrices() {
     ["month", "quarter", "year"].forEach(function (k) {
       var node = plansEl.querySelector('[data-p="' + k + '"]');
       if (!node) return;
-      if ((provider === "alipay" || provider === "payoneer") && plans && plans[k]) {
-        var unit = k === "month" ? L("unit_month") : k === "quarter" ? L("unit_quarter") : L("unit_year");
+      var unit = k === "month" ? L("unit_month") : k === "quarter" ? L("unit_quarter") : L("unit_year");
+      if (provider === "alipay" && plans && plans[k]) {
         node.innerHTML = "\u00a5" + plans[k].amount + '<small>' + unit + '</small>';
+      } else if (provider === "payoneer" && USD_PRICES[k]) {
+        node.innerHTML = "$" + USD_PRICES[k] + '<small>' + unit + '</small>';
       } else {
         node.innerHTML = '<small>' + L("local_currency") + '</small>';
       }
