@@ -5,6 +5,6 @@
  */
 (function (root) {
   root.PanGrabProConfig = {
-    apiBase: "https://kpl.us.kg"
+    apiBase: "https://api.kpl.us.kg"
   };
 })(typeof self !== "undefined" ? self : this);
