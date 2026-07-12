@@ -9,7 +9,7 @@
 ## ✨ 功能一览
 
 ### 链接识别与收藏
-- **自动识别 27 家网盘**分享链接：百度、阿里、夸克、迅雷、115、天翼、123、UC、城通、微云、蓝奏、移动云，以及 MEGA、Google Drive、Dropbox、OneDrive、TeraBox、MediaFire、Box、pCloud、WeTransfer、Yandex、Proton Drive、iCloud、Gofile、4shared、1fichier
+- **自动识别 27 家主流网盘**分享链接：国内涵盖百度、阿里、夸克等，国际涵盖 Google Drive、Dropbox、MEGA 等
 - **磁力链接（magnet）识别**：自动抓取页面里的 `magnet:` 链接，名称取自 `dn` 字段，按 btih 哈希去重，可一键复制到迅雷/qBittorrent 等下载工具
 - **自动抓取提取码**（标签式 `提取码:xxxx` 与 URL 内嵌 `?pwd=xxxx`）
 - **累积式扫描**：支持推特/微博等虚拟滚动页面，滑出屏幕的链接不丢失
@@ -43,7 +43,8 @@
 - **兑换码**：管理员生成卡密，在闲鱼/发卡平台/爱发电出售，用户在扩展内输码激活
 - **在线购买**：按地区自动选择支付渠道
   - 中国大陆 → **支付宝当面付**（人民币扫码）
-  - 台湾/香港/海外 → **Lemon Squeezy**（信用卡/PayPal，本地货币结算，需在后端配置）
+  - 海外 → **Payoneer**（购买页引导联系客服获取付款链接，收款后发兑换码激活；美元计价 $2.99 / $6.99 / $11.99）
+  - Lemon Squeezy 审核通过并在后端配置后，海外可自动切换为自助信用卡 / PayPal 收单
 
 ---
 
